@@ -219,8 +219,10 @@ def load_dataset(
                 pl.lit(meta.retrieved_at).str.to_datetime(time_zone="UTC").alias("observed_at")
             )
             _ensure_table(con, table, df)
+            con.begin()
             n = _insert(con, table, df)
             _record_load(con, table, meta.season, meta, n)
+            con.commit()
             out.append((table, meta.season, n))
         return out
 
@@ -236,12 +238,14 @@ def load_dataset(
             log.info("already loaded %s %s", table, meta.snapshot_id)
             continue
         _ensure_table(con, table, df)
+        con.begin()
         if strategy == "replace_all":
             con.execute(f"DELETE FROM {table}")
         elif strategy == "replace_season":
             con.execute(f"DELETE FROM {table} WHERE season = ?", [season])
         n = _insert(con, table, df)
         _record_load(con, table, season, meta, n)
+        con.commit()
         out.append((table, season, n))
         log.info("loaded %s season=%s rows=%s from %s", table, season, n, meta.snapshot_id)
     return out
