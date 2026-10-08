@@ -1,0 +1,189 @@
+# Dataset registry. Every ingested dataset is declared here; the ingestion code refuses anything not listed.
+# tier: 1 official NFL, 2 nflverse, 3 reputable historical DB, 4 analytics pubs, 5 news/community
+# cadence: how the upstream updates (from P0-DATA-001); we snapshot on our own schedule regardless.
+# release URL pattern: https://github.com/nflverse/nflverse-data/releases/download/{tag}/{file}
+
+nflverse:
+  base_url: https://github.com/nflverse/nflverse-data/releases/download
+  license: CC BY 4.0 (releases); FTN-derived tables CC-BY-SA 4.0 — attribution "FTN Data via nflverse"
+  user_agent: "nfl-edge-lab/0.1 (personal research; polite; +https://github.com/thatguydennis/edge-lab)"
+  datasets:
+    schedules:
+      tag: schedules
+      file: games.parquet
+      per_season: false
+      first_season: 1999
+      key: [game_id]
+      cadence: every 5-30 min in-season (Lee Sharpe nfldata upsert)
+      notes: >
+        spread_line/total_line/moneylines/odds are LIVE and overwritten until kickoff; line_class=last_pull.
+        referee, temp, wind, roof, result, total, home/away_qb_* are back-filled post-game: quarantined for features.
+      quarantine_columns: [referee, temp, wind, result, total, overtime, away_score, home_score, away_qb_id, home_qb_id, away_qb_name, home_qb_name]
+    pbp:
+      tag: pbp
+      file: play_by_play_{season}.parquet
+      per_season: true
+      first_season: 1999
+      supported_from: 2001   # nflfastR 6.0 no longer fixes 1999-2000
+      key: [game_id, play_id]
+      cadence: nightly after game days; re-run Wed-Thu for stat corrections; historical files rebuilt occasionally (Aug 2026)
+    stats_team_week:
+      tag: stats_team
+      file: stats_team_week_{season}.parquet
+      per_season: true
+      first_season: 1999
+      key: [season, week, team]
+      cadence: same as pbp
+    stats_player_week:
+      tag: stats_player
+      file: stats_player_week_{season}.parquet
+      per_season: true
+      first_season: 1999
+      key: [season, week, player_id, team]
+      cadence: same as pbp
+    injuries:
+      tag: injuries
+      file: injuries_{season}.parquet
+      per_season: true
+      first_season: 2009
+      key: [season, week, team, gsis_id]
+      cadence: daily 07:07 UTC in-season
+      notes: date_modified present 2010-2024, ABSENT 2025+. Each row is latest state; prior states overwritten upstream. We snapshot daily; observed_at = our retrieval time.
+      snapshot_daily: true
+    depth_charts:
+      tag: depth_charts
+      file: depth_charts_{season}.parquet
+      per_season: true
+      first_season: 2001
+      key_pre2025: [season, week, club_code, depth_team, position, gsis_id]
+      key_2025plus: [season, dt, team, pos_slot, pos_rank, gsis_id]
+      cadence: daily 07:07 UTC
+      notes: format break 2024->2025 (weekly NFL format vs ESPN daily snapshots with dt).
+      snapshot_daily: true
+    rosters_weekly:
+      tag: weekly_rosters
+      file: roster_weekly_{season}.parquet
+      per_season: true
+      first_season: 2002
+      key: [season, week, team, gsis_id]
+      cadence: daily 07:07 UTC
+    players:
+      tag: players
+      file: players.parquet
+      per_season: false
+      key: [gsis_id]
+      cadence: nightly
+    snap_counts:
+      tag: snap_counts
+      file: snap_counts_{season}.parquet
+      per_season: true
+      first_season: 2012
+      key: [game_id, pfr_player_id]
+      cadence: every 6h in-season (PFR)
+      upstream_terms: PFR-derived; personal research use only; no redistribution
+    pfr_advstats_week_pass:
+      tag: pfr_advstats
+      file: advstats_week_pass_{season}.parquet
+      per_season: true
+      first_season: 2018
+      key: [game_id, pfr_player_id]
+      cadence: every 6h in-season
+      upstream_terms: PFR-derived; personal research use only; no redistribution
+    pfr_advstats_week_def:
+      tag: pfr_advstats
+      file: advstats_week_def_{season}.parquet
+      per_season: true
+      first_season: 2018
+      key: [game_id, pfr_player_id]
+      cadence: every 6h in-season
+      upstream_terms: PFR-derived; personal research use only; no redistribution
+    ftn_charting:
+      tag: ftn_charting
+      file: ftn_charting_{season}.parquet
+      per_season: true
+      first_season: 2022
+      key: [nflverse_game_id, nflverse_play_id]
+      cadence: 4x/day in-season; charted within 48h of each game
+      license: CC-BY-SA 4.0 — attribution "FTN Data via nflverse"
+    ngs_passing:
+      tag: nextgen_stats
+      file: ngs_passing.parquet
+      per_season: false
+      first_season: 2016
+      key: [season, week, player_gsis_id]
+      cadence: nightly in-season
+    espn_qbr_week:
+      tag: espn_data
+      file: qbr_week_level.parquet
+      per_season: false
+      first_season: 2006
+      key: [season, week, player_id]
+      cadence: nightly in-season
+      notes: not exposed by nflreadpy; fetched from the release URL directly
+    participation:
+      tag: pbp_participation
+      file: pbp_participation_{season}.parquet
+      per_season: true
+      first_season: 2016
+      last_available_season: 2025
+      key: [nflverse_game_id, play_id]
+      cadence: post-season dump (FTN) since 2023; NOT available in-season
+      license: CC-BY-SA 4.0 (2023+)
+    teams:
+      tag: teams
+      file: teams_colors_logos.parquet
+      per_season: false
+      key: [team_abbr]
+    officials:
+      tag: officials
+      file: officials.parquet
+      per_season: false
+      first_season: 2015
+      key: [game_id, official_id]
+      notes: stale for 2026 (week 1 only as of Oct 7). Deferred.
+      enabled: false
+
+nfldata_raw:
+  base_url: https://raw.githubusercontent.com/nflverse/nfldata/master/data
+  datasets:
+    closing_lines:
+      file: closing_lines.csv
+      seasons: 2006-2018
+      line_class: close
+      book: unknown
+      notes: true closing-line archive per nfldata; book unlabeled. Used as a secondary close source.
+    initial_lines:
+      file: initial_lines.csv
+      seasons: 2021
+      line_class: open
+      book: WSGT
+
+sbr_archive:
+  base_url: https://www.sportsbookreviewsonline.com/scoresoddsarchives
+  seasons: 2007-2021
+  line_class: [open, close]
+  book: unknown
+  fields: [Date, Rot, VH, Team, 1st, 2nd, 3rd, 4th, Final, Open, Close, ML, 2H]
+  notes: >
+    HTML tables, frozen ("will not be updated"). Favorite row carries spread in Open/Close/2H; dog row carries total.
+    pk = pick'em. Date is MDD without year. Parser lives in src/edgelab/ingest/sbr.py (Phase 3).
+  enabled: false
+
+odds_api:
+  base_url: https://api.the-odds-api.com/v4
+  sport_key: americanfootball_nfl
+  plan: free (500 credits/month); historical endpoints require a paid plan (deferred to Phase 3)
+  regions: [us]              # us2 (theScore Bet, Hard Rock, etc.) and eu (pinnacle) cost extra credits; add when paid
+  markets: [h2h, spreads, totals]
+  odds_format: american
+  credits_per_call: 3        # markets x regions
+  schedule:
+    - name: tue_open
+      when: Tuesday 10:00 ET
+    - name: midweek
+      when: Thursday 12:00 ET
+    - name: pre_kickoff
+      when: 60 minutes before each distinct kickoff slot (Thu night, Sun early, Sun 1:00, Sun 4:05/4:25, Sun night, Mon night)
+  notes: >
+    Each call = full snapshot of every upcoming NFL game at every bookmaker in the region, with per-market last_update.
+    Paid historical access records every 5 min regardless, so missed snapshots are backfillable later.

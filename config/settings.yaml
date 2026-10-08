@@ -1,0 +1,30 @@
+# Project-wide settings. Secrets live in .env, never here.
+timezone: America/New_York
+data_dir: data
+db_path: data/db/edgelab.duckdb
+
+seasons:
+  ratings_warmup_from: 2001     # team-strength priors only (no betting data)
+  betting_from: 2010            # moneylines + spread odds ~0% null from here
+  dev: [2010, 2021]
+  validation: [2022, 2023]
+  sealed_test: [2024, 2025]     # run once per model version, backtesting role only
+  live: 2026
+
+cutoff:
+  rule: "Saturday 20:00 local (America/New_York) for Sunday/Monday games; the evening before for Thursday, Saturday and international games"
+  default_time: "20:00"
+
+sizing:   # v0 flat sizing; Kelly deferred until a season of calibration evidence
+  unit_definition: "TODO owner decision (proposed: 1u = 1% of bankroll)"
+  bet_units: 0.5
+  lean_units: 0.25
+  max_units_per_game: 3.0
+  max_units_per_week: 10.0
+
+decision_thresholds:   # placeholders; replaced by backtest-calibrated values in Phase 3
+  ats_min_edge_prob: null
+  ml_min_ev: null
+  min_confidence: null
+
+prediction_labels: [BET, LEAN, PASS, NO_DATA]

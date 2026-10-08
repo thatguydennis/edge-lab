@@ -1,0 +1,1 @@
+Launch the `auditor` subagent on the handoff $ARGUMENTS (a TASK-ID). Give it only: the task id, the paths of its handoff `.md`/`.json`, the current commit hash, and which checklist(s) to run. Do not summarize the work for it. When it returns, record the verdict path and say whether a blocker exists.

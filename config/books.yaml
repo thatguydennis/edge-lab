@@ -1,0 +1,144 @@
+# Book registry. book_id is ours and permanent; feed keys and display names carry validity dates.
+# book_type: book | exchange | reference | aggregate
+# Verified against The Odds API bookmaker list and press coverage, 2026-10-08 (P0-MKT-001).
+
+books:
+  - book_id: draftkings
+    display_name: DraftKings
+    book_type: book
+    feed_keys: { odds_api: draftkings }
+    region: us
+    valid_from: 2018-08-01
+  - book_id: fanduel
+    display_name: FanDuel
+    book_type: book
+    feed_keys: { odds_api: fanduel }
+    region: us
+    valid_from: 2018-07-01
+  - book_id: betmgm
+    display_name: BetMGM
+    book_type: book
+    feed_keys: { odds_api: betmgm }
+    region: us
+    valid_from: 2018-08-01
+  - book_id: caesars
+    display_name: Caesars Sportsbook
+    book_type: book
+    feed_keys: { odds_api: williamhill_us }
+    region: us
+    valid_from: 2021-08-01
+    notes: paid-only in The Odds API
+  - book_id: betrivers
+    display_name: BetRivers
+    book_type: book
+    feed_keys: { odds_api: betrivers }
+    region: us
+    valid_from: 2019-01-01
+  - book_id: fanatics
+    display_name: Fanatics Sportsbook
+    book_type: book
+    feed_keys: { odds_api: fanatics }
+    region: us
+    valid_from: 2023-08-01
+    notes: absorbed PointsBet US 2023-24; paid-only in The Odds API
+  - book_id: thescore_bet
+    display_name: theScore Bet
+    book_type: book
+    feed_keys: { odds_api: espnbet }
+    region: us2
+    valid_from: 2025-12-01
+    aliases:
+      - { display_name: ESPN BET, valid_from: 2023-11-14, valid_to: 2025-11-30 }
+    notes: ESPN BET rebranded to theScore Bet 2025-12-01; feed key unchanged
+  - book_id: hardrock
+    display_name: Hard Rock Bet
+    book_type: book
+    feed_keys: { odds_api: hardrockbet }
+    region: us2
+  - book_id: ballybet
+    display_name: Bally Bet
+    book_type: book
+    feed_keys: { odds_api: ballybet }
+    region: us2
+  - book_id: betparx
+    display_name: betPARX
+    book_type: book
+    feed_keys: { odds_api: betparx }
+    region: us2
+  - book_id: fliff
+    display_name: Fliff
+    book_type: book
+    feed_keys: { odds_api: fliff }
+    region: us2
+  - book_id: bet365_us
+    display_name: bet365 (US)
+    book_type: book
+    feed_keys: {}
+    notes: no US feed in The Odds API
+  - book_id: pinnacle
+    display_name: Pinnacle
+    book_type: reference
+    feed_keys: { odds_api: pinnacle }
+    region: eu
+    notes: public API closed 2025-07-23; feed relays public site with delay. CLV reference when present.
+  - book_id: circa
+    display_name: Circa Sports
+    book_type: reference
+    feed_keys: {}
+    notes: not in any self-serve feed
+  - book_id: kalshi
+    display_name: Kalshi
+    book_type: exchange
+    feed_keys: { odds_api: kalshi }
+    region: us_ex
+  - book_id: polymarket
+    display_name: Polymarket
+    book_type: exchange
+    feed_keys: { odds_api: polymarket }
+    region: us_ex
+  - book_id: novig
+    display_name: Novig
+    book_type: exchange
+    feed_keys: { odds_api: novig }
+    region: us_ex
+  - book_id: prophetx
+    display_name: ProphetX
+    book_type: exchange
+    feed_keys: { odds_api: prophetx }
+    region: us_ex
+  - book_id: bovada
+    display_name: Bovada
+    book_type: book
+    feed_keys: { odds_api: bovada }
+    region: us
+    notes: offshore; captured, excluded from bettable price
+  - book_id: betonline
+    display_name: BetOnline.ag
+    book_type: book
+    feed_keys: { odds_api: betonlineag }
+    region: us
+    notes: offshore; captured, excluded from bettable price
+  - book_id: nflverse
+    display_name: nflverse schedule line (unknown book)
+    book_type: aggregate
+    feed_keys: {}
+    notes: live, overwritten, unlabeled; line_class last_pull
+  - book_id: sbr
+    display_name: SBR archive (unnamed book)
+    book_type: aggregate
+    feed_keys: {}
+    notes: 2007-2021 open/close/ML; book identity unknown
+  - book_id: nfldata_closing
+    display_name: nfldata closing_lines.csv (unknown book)
+    book_type: aggregate
+    feed_keys: {}
+    notes: 2006-2018 closing lines; book identity unknown
+
+clv_reference:
+  primary: pinnacle
+  fallback_consensus: [draftkings, fanduel, betmgm]
+
+bettable_books:   # TODO owner decision: which books Dennis actually bets at
+  - draftkings
+  - fanduel
+  - betmgm

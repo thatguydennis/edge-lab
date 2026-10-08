@@ -1,0 +1,30 @@
+# secrets
+.env
+*.key
+
+# data lake and database. Rebuildable from upstream + code, EXCEPT the two datasets whose upstream
+# history is lossy: our daily injury snapshots and odds-feed snapshots. Those are small and tracked.
+data/snapshots/*
+!data/snapshots/nflverse/
+data/snapshots/nflverse/*
+!data/snapshots/nflverse/injuries/
+!data/snapshots/odds_api/
+data/db/
+data/cache/
+!data/metadata/
+
+# python
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+dist/
+build/
+*.egg-info/
+
+# os / editors
+.DS_Store
+.idea/
+.vscode/

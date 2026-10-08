@@ -1,0 +1,11 @@
+# Prediction audit checklist (weekly, before freeze)
+- [ ] `edgelab quality` for the week: zero CRITICAL
+- [ ] Every game on the slate has a market row from the odds feed with observed_at ≤ cutoff and book_id
+- [ ] Cutoff timestamp is before the first kickoff covered; games already started are excluded
+- [ ] Fair-price math reproduced by the auditor's odds script within rounding for every game
+- [ ] Every BET/LEAN carries "why the model likes it" and "why it could be wrong" with concrete counterarguments
+- [ ] Data warnings surfaced (missing injuries, untimestamped data, stale snapshots) and reflected in NO DATA where required
+- [ ] Model version, feature versions, snapshot ids, code commit recorded on the snapshot
+- [ ] No official snapshot already exists for (season, week); predictions_official is append-only
+- [ ] Recommended units within caps (config/settings.yaml)
+- [ ] Report matches the snapshot (no edits after freeze)
