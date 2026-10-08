@@ -140,6 +140,15 @@ class SnapshotStore:
         snapshot_id = f"{source}.{dataset}.{season_tag}.{_compact_ts(retrieved_at)}.{digest[:8]}"
 
         if prev is not None and prev.sha256 == digest:
+            prev_file = self.root / prev.path
+            if not prev_file.exists():
+                # Same bytes as the indexed snapshot but absent on this machine (index is shared via
+                # git, the lake is per machine): materialize it at the recorded path.
+                prev_file.parent.mkdir(parents=True, exist_ok=True)
+                prev_file.write_bytes(data)
+                meta_file = prev_file.with_name(prev_file.name + ".meta.json")
+                if not meta_file.exists():
+                    meta_file.write_text(prev.to_json() + "\n", encoding="utf-8")
             meta = SnapshotMeta(
                 snapshot_id=snapshot_id, source=source, dataset=dataset, season=season, url=url,
                 retrieved_at=retrieved_at, last_modified=last_modified, sha256=digest, bytes=len(data),
