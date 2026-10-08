@@ -171,7 +171,8 @@ class SnapshotStore:
                 snapshot_id=snapshot_id, source=source, dataset=dataset, season=season, url=url,
                 retrieved_at=retrieved_at, last_modified=last_modified, sha256=digest, bytes=len(data),
                 rows=rows, columns=cols, ext=ext, path=prev.path, loader_version=LOADER_VERSION,
-                duplicate_of=prev.snapshot_id, extra=extra,
+                duplicate_of=prev.duplicate_of or prev.snapshot_id,  # always the primary record
+                extra=extra,
             )
             self._append_index(meta)
             return meta

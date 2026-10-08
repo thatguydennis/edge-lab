@@ -62,3 +62,12 @@ def test_latest_local_skips_absent_newer_snapshot(tmp_settings):
     (tmp_settings.root / m2.path).unlink()
     assert store.latest("nflverse", "schedules").snapshot_id == m2.snapshot_id
     assert store.latest_local("nflverse", "schedules").snapshot_id == m1.snapshot_id
+
+
+def test_duplicate_of_always_points_to_primary(tmp_settings):
+    store = SnapshotStore(tmp_settings)
+    data = _parquet_bytes(pl.DataFrame({"a": [1]}))
+    m1 = store.put(source="t", dataset="d", season=None, url="u", data=data, ext="parquet", retrieved_at="2026-10-08T10:00:00+00:00")
+    m2 = store.put(source="t", dataset="d", season=None, url="u", data=data, ext="parquet", retrieved_at="2026-10-08T11:00:00+00:00")
+    m3 = store.put(source="t", dataset="d", season=None, url="u", data=data, ext="parquet", retrieved_at="2026-10-08T12:00:00+00:00")
+    assert m2.duplicate_of == m1.snapshot_id and m3.duplicate_of == m1.snapshot_id
