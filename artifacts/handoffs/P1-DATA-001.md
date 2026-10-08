@@ -39,7 +39,7 @@ Reproduced on a second machine (Dennis's Mac workspace): identical row counts an
 RECOMMENDATION: accept as the Phase 1 foundation; proceed to Phase 2 (as-of feature builder) after the data audit.
 FILES / ARTIFACTS PRODUCED: src/edgelab/{config.py,cli.py,ingest/*,db/*,quality/*,pricing/odds.py}, config/*.yaml,
 docs/LEAKAGE_REGISTER.md, data/metadata/snapshots.jsonl, reports/quality/dq_20261008T131611Z.md, tests/.
-AUDIT STATUS: REVISION_REQUIRED (audit 1, artifacts/audit/P1-DATA-001.audit.md) → revised, re-audit requested
+AUDIT STATUS: APPROVED_WITH_CONDITIONS (audit 1 REVISION_REQUIRED → revised → audit 2 APPROVED_WITH_CONDITIONS)
 REVISION (2026-10-08, after audit 1):
 - B1 fixed: tz-aware upstream timestamps now stored as TIMESTAMPTZ on the ALTER path; `connect()` sets TimeZone=UTC; verified 2024-09-06 19:05:30 UTC round-trips; DQ checks `time.naive_timestamp_columns`, `injuries.date_modified_tz`; unit test tests/schema/test_timezones.py.
 - M1 fixed: quarantine list now covers L1–L4 (lines, roof, stadium, results, QB columns); test tests/leakage/test_quarantine.py parses the register.
@@ -48,4 +48,10 @@ REVISION (2026-10-08, after audit 1):
 - M4 fixed: `nfl.games.kickoff_utc` derived from gameday+gametime (America/New_York → UTC); DQ check; unit test for London/ET/null cases.
 - minors: unique snapshot ids on same-second collisions; tables stamped with the primary snapshot id; snap_counts first_season=2013; corrected keys for espn_qbr_week/depth_charts/injuries/rosters; DQ check for 2010 null date_modified (62 rows, WARN); DQ check count is now 23.
 - Audit verdict recorded via `edgelab audit record` (lab.audit_results).
-NEXT ACTION: auditor — scoped re-audit (timestamps raw-vs-loaded, quarantine vs L1–L4, rosters key rule, schedule-line persistence, kickoff_utc samples).
+AUDIT 2 (artifacts/audit/P1-DATA-001.audit2.md): APPROVED WITH CONDITIONS, no re-audit required.
+- C1 (major) FIXED same day: live-line extract now filters on kickoff_utc > retrieved_at (not calendar date); DQ `market.live_after_kickoff` is CRITICAL if violated; unit test tests/unit/test_schedule_lines.py.
+- C2 (minor) DONE: correction logged in lab.events; `edgelab quality` re-run (25 checks, 0 CRITICAL, 3 WARN).
+- C3 (minor) DEFERRED to Phase 2 (feature layer): full rosters_weekly status precedence + DQ check; 71 exact dupes and 1,165 player-weeks without an ACT row (2010–2015) documented here.
+- C4 (minor) DEFERRED: coverage-by-season table lives in this handoff's RESULTS and reports/quality/; an in-table `untimestamped` flag and a data dictionary with type-drift notes are Phase 2 items (docs/DATA_DICTIONARY.md).
+- Note: string event-time columns (plays.time_of_day, depth_chart_snapshots.dt, games.gameday/gametime) stay VARCHAR; the feature layer must parse them as UTC explicitly (asof.py).
+NEXT ACTION: Phase 2 — as-of feature builder with leakage tests.

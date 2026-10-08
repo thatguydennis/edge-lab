@@ -1,0 +1,77 @@
+TimeZone: ('UTC',)
+
+== (1) injuries.date_modified raw vs loaded, every 2010-2024 snapshot ==
+rows compared 79863, mismatches 0, raw rows 79863
+db type: ('TIMESTAMP WITH TIME ZONE',)
+sample: [('2024-09-06 19:05:30+00',)]
+
+== (1b) naive TIMESTAMP columns anywhere in nfl/market/lab ==
+[]
+TIMESTAMPTZ columns: [('market.historical_lines.observed_at',), ('market.line_discrepancies.recorded_at',), ('market.odds_snapshots.observed_at',), ('market.odds_snapshots.commence_time',), ('market.odds_snapshots.book_last_update',), ('market.odds_snapshots.market_last_update',), ('nfl.ftn_charting.date_pulled',), ('nfl.games.kickoff_utc',), ('nfl.injury_reports.observed_at',), ('nfl.injury_reports.date_modified',)]
+ftn date_pulled sample raw/db:
+shape: (1, 1)
+┌────────────────────────────────┐
+│ date_pulled                    │
+│ ---                            │
+│ datetime[μs, UTC]              │
+╞════════════════════════════════╡
+│ 2026-09-22 20:52:46.111704 UTC │
+└────────────────────────────────┘ ('2026-09-22 20:52:46.111704+00',)
+string-typed event-time columns (not covered by the DQ check): [('depth_chart_snapshots', 'dt'), ('games', 'gameday'), ('games', 'gametime'), ('plays', 'game_date'), ('plays', 'start_time'), ('plays', 'time_of_day')]
+
+== (3) rosters key with status unique? ==
+dupes (season,week,team,gsis_id,status): (71,)
+player-weeks 2010-2015 with >1 status and none ACT: (1165,)
+status combos in dup groups: [('ACT+TRC', 3550), ('ACT+TRD', 2701), ('ACT+TRT', 645), ('ACT+TRC+TRD', 431), ('RES+TRC', 204), ('CUT+TRC', 194), ('DEV+TRD', 167), ('CUT+TRD', 141)]
+
+== (4) schedule-line persistence ==
+[('live', 29, 29, 1, '2026-10-08 13:41:22+00', '2026-10-08 13:41:22+00'), ('last_pull', 7340, 7340, 1, '2026-10-08 13:41:22+00', '2026-10-08 13:41:22+00')]
+dupes per (game_id, snapshot_id): (0,)
+dupes per (game_id, snapshot_id, line_class): (0,)
+live rows by snapshot_id: [('nflverse.schedule_lines.all.20261008T134122+0000.69db1aee', 29, '2026-10-08 13:41:22+00')]
+live rows for completed games: (0,)
+last_pull rows for unplayed games: (0,)
+live rows observed after kickoff: (0,)
+live snapshot ids in index? []
+schedule_lines index rows: [('nflverse.schedule_lines.all.20261008T134122+0000.69db1aee', 29, {'derived_from': 'nflverse.schedules.all.20261008T134122+0000.c8ea28b2'})]
+raw extract columns: ['game_id', 'season', 'week', 'gameday', 'gametime', 'home_team', 'away_team', 'spread_line', 'home_spread_odds', 'away_spread_odds', 'total_line', 'over_odds', 'under_odds', 'home_moneyline', 'away_moneyline', 'home_qb_name', 'away_qb_name'] rows: 29
+raw-vs-loaded live mismatches: 0 joined 29
+nfl.games snapshot_id: [('nflverse.schedules.all.20261008T134122+0000.c8ea28b2',)] derived_from: {'derived_from': 'nflverse.schedules.all.20261008T134122+0000.c8ea28b2'}
+games with lines but result null (should equal live distinct game_ids): (29,)
+week5/6 line values changed between the 13:08 and 13:41 schedule snapshots?
+shape: (0, 7)
+┌─────────┬─────────────┬───────────────┬────────────┬───────────────┬──────────────┬──────────────┐
+│ game_id ┆ spread_line ┆ home_moneylin ┆ total_line ┆ spread_line_b ┆ home_moneyli ┆ total_line_b │
+│ ---     ┆ ---         ┆ e             ┆ ---        ┆ ---           ┆ ne_b         ┆ ---          │
+│ str     ┆ f64         ┆ ---           ┆ f64        ┆ f64           ┆ ---          ┆ f64          │
+│         ┆             ┆ i32           ┆            ┆               ┆ i32          ┆              │
+╞═════════╪═════════════╪═══════════════╪════════════╪═══════════════╪══════════════╪══════════════╡
+└─────────┴─────────────┴───────────────┴────────────┴───────────────┴──────────────┴──────────────┘
+
+== (5) kickoff_utc samples ==
+type: ('TIMESTAMP WITH TIME ZONE',)
+[('2026_05_PHI_JAX', '2026-10-11', '09:30', 'Sunday', '2026-10-11 13:30:00+00', '2026-10-11 09:30:00')]
+[('2026_05_TB_DAL', '2026-10-08', '20:15', 'Thursday', '2026-10-09 00:15:00+00', '2026-10-08 20:15:00')]
+[('2026_05_CHI_GB', '2026-10-11', '13:00', 'Sunday', '2026-10-11 17:00:00+00', '2026-10-11 13:00:00')]
+[('2025_01_KC_LAC', '2025-09-05', '20:00', 'Friday', '2025-09-06 00:00:00+00', '2025-09-05 20:00:00')]
+[('2025_04_MIN_PIT', '2025-09-28', '09:30', 'Sunday', '2025-09-28 13:30:00+00', '2025-09-28 09:30:00')]
+[]
+[('2023_12_CHI_MIN', '2023-11-27', '20:15', 'Monday', '2023-11-28 01:15:00+00', '2023-11-27 20:15:00')]
+[('2010_01_MIN_NO', '2010-09-09', '20:30', 'Thursday', '2010-09-10 00:30:00+00', '2010-09-09 20:30:00')]
+[]
+Monday night sample: [('2025_01_MIN_CHI', '2025-09-08', '20:15', '2025-09-09 00:15:00+00'), ('2025_02_TB_HOU', '2025-09-15', '19:00', '2025-09-15 23:00:00+00')]
+null gametime rows: (259, 259)
+gametime set but kickoff_utc null: (0,)
+kickoff_utc date != gameday (ET) for any game? (should be 0 when converted back): (0,)
+ET wall-clock round trip != gametime: (0,)
+DST check: Nov games 13:00 ET -> 18:00 UTC; Sep games 13:00 ET -> 17:00 UTC: [('01', '18:00'), ('09', '17:00'), ('10', '17:00'), ('11', '18:00'), ('12', '18:00')]
+pbp time_of_day vs kickoff_utc (first play within 0-60 min after kickoff) 2025: (285, 285)
+
+== minors ==
+snapshot ids on rows are primary (not duplicate_of rows): (0,)
+load_runs snapshot ids that are duplicate rows: (0,)
+audit_results: [('P1-DATA-001', 'data', 'REVISION_REQUIRED', 1, 4, 9, True, '353addd', 'artifacts/audit/P1-DATA-001.audit.md')]
+dq runs: [('2026-10-08 13:43:19+00', 23, 3, 1, 'stop'), ('2026-10-08 13:43:58+00', 24, 3, 0, 'continue_with_warning')]
+snap_counts seasons: (2013, 14) load_runs 2012: (0,)
+games rows / plays rows unchanged: (7548, 781492, 87205)
+games 2026 snapshot now 13:41 — week 5 lines still present/ unplayed: (29, 0)

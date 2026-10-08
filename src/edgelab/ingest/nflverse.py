@@ -133,10 +133,17 @@ def derive_schedule_lines(sched: SnapshotMeta, store: SnapshotStore) -> Snapshot
     import polars as pl
 
     df = store.read(sched)
-    today = sched.retrieved_at[:10]
+    retrieved = pl.lit(sched.retrieved_at).str.to_datetime(time_zone="UTC")
+    kickoff = (
+        (pl.col("gameday") + " " + pl.col("gametime")).str.to_datetime("%Y-%m-%d %H:%M", strict=False)
+        .dt.replace_time_zone("America/New_York", ambiguous="earliest").dt.convert_time_zone("UTC")
+    )
+    # Only games whose kickoff is still in the future at retrieval time are 'live' (audit 2, C1).
+    # Games with no kickoff time yet are excluded rather than guessed.
     live = df.filter(
         (pl.col("spread_line").is_not_null() | pl.col("home_moneyline").is_not_null())
-        & (pl.col("gameday") >= today)
+        & pl.col("gametime").is_not_null()
+        & (kickoff > retrieved)
     ).select([c for c in LINE_COLUMNS if c in df.columns])
     buf = io.BytesIO()
     live.write_parquet(buf)

@@ -1,12 +1,12 @@
 # PROJECT_STATE.md — read this first in every session
 
-Updated: 2026-10-08 13:30 UTC by the Orchestrator (session 1).
+Updated: 2026-10-08 14:10 UTC by the Orchestrator (session 1).
 
 ## Versions
-- code: **v0.1** (data foundation) — in progress, not yet tagged
+- code: **v0.1** (data foundation) — complete, audited (APPROVED WITH CONDITIONS), tagged v0.1
 - model: none
 - agents: **a0.1**
-- Phase: **1 — Data foundation** (see ROADMAP.md)
+- Phase: **1 complete → 2 — features + baselines** (see ROADMAP.md)
 
 ## Decisions on record
 - 2026-10-08 Dennis: no Week 5 card. Week 5 = data collection. **First official week = Week 6** (freeze Sat Oct 17, 20:00 ET).
@@ -30,17 +30,19 @@ Updated: 2026-10-08 13:30 UTC by the Orchestrator (session 1).
   DQ: 16 pass / 2 warn / 0 critical (warn: 2017_04_CHI_GB missing moneyline; 7,342 untimestamped 2025+ injury rows).
 - Tests: 30 passing; ruff clean.
 
+## Also completed
+- v0.1 pushed to GitHub; repo cloned to the Mac at `~/Claude Cowork/Projects/edge lab/repo`, env installed, lake + DB rebuilt there (identical).
+- Data audit P1-DATA-001: audit 1 REVISION REQUIRED (blocker B1 timestamps; majors M1–M4) → all fixed → audit 2 APPROVED WITH CONDITIONS.
+  Verdicts in artifacts/audit/; recorded in lab.audit_results.
+
 ## In progress / next
-1. Commit v0.1 and push (blocked: GitHub write access — see blockers).
-2. Clone the repo into Dennis's Mac folder; `uv sync`; run `edgelab ingest daily` from there.
-3. Daily snapshot job (injuries + odds): decide where it runs (Mac scheduled task vs cloud scheduled task after push access).
-4. Data audit by the auditor role (checklist `.claude/agents/auditor/checklists/data.md`) → P1-DATA-001 handoff.
-5. Phase 2: `features/asof.py`, leakage tests, team-strength features, M0/A/B/D, decision layer.
-6. Phase 3: SBR parser, discrepancy study, walk-forward harness.
+1. Daily snapshot job (`edgelab ingest daily` + `edgelab ingest odds`): must run from a native Mac terminal (odds host blocked in sandboxes). Decide: Claude Code on the Mac or a launchd schedule.
+2. Phase 2: `features/asof.py` (quarantine enforced in code, string event-times parsed as UTC), leakage tests, team strength, rest, QB starter, M0/A/B/D, pricing distribution, decision layer → leakage audit.
+3. Deferred from audit 2 (C3, C4): rosters_weekly status precedence + DQ; docs/DATA_DICTIONARY.md with type-drift notes; in-table `untimestamped` flag.
+4. Phase 3: SBR parser (2010–2021), nfldata closing_lines.csv, discrepancy study, walk-forward harness, sealed-season run → backtest audit.
+5. Week 6 freeze Sat Oct 17 20:00 ET only if 2–4 are audited.
 
 ## Blockers / limitations
-- **GitHub push refused** from the cloud session until Dennis reconnects GitHub in claude.ai settings
-  (or installs the Claude GitHub App on `edge-lab`).
 - **`api.the-odds-api.com` is blocked** by the network allowlist in both the cloud workspace and the Mac's
   isolated workspace (HTTP 403 from proxy). Odds snapshots must run from a native terminal on the Mac
   (Claude Code) or after the host is allow-listed. The key itself is valid (verified via a fetch tool).
@@ -51,7 +53,10 @@ Updated: 2026-10-08 13:30 UTC by the Orchestrator (session 1).
 - nflverse `spread_line` is positive when home is favored; `market.historical_lines.spread_home = -spread_line`.
 - 2026 schedule has 8 neutral-site games (see P0-DATA-001); week 5 byes: CAR, KC.
 - Depth charts ≤2024 → `nfl.depth_charts_weekly`; ≥2025 → `nfl.depth_chart_snapshots` (column `dt`).
-- Injury rows carry `observed_at` (our retrieval); `date_modified` only ≤2024.
+- Injury rows carry `observed_at` (our retrieval); `date_modified` only ≤2024 (TIMESTAMPTZ, UTC).
+- `nfl.games.kickoff_utc` is derived (gameday + gametime in America/New_York → UTC); `gametime` is Eastern wall-clock.
+- `market.historical_lines.line_class`: `last_pull` = completed game (≈close, book unknown); `live` = pre-kickoff observation from a tracked schedule_lines snapshot. Never `close` from nflverse.
+- Two machines, one git-tracked index: the lake is per machine and rebuildable; only injuries, schedule_lines and odds snapshots are committed.
 
 ## Open owner questions
 - Which sportsbooks Dennis bets at (config/books.yaml → bettable_books).

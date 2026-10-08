@@ -140,6 +140,10 @@ def run_checks(con: duckdb.DuckDBPyConnection, store: SnapshotStore, season: int
         f.append(Finding("market.nflverse_line_class", "CRITICAL" if mislabeled else "PASS", "nflverse lines must be last_pull or live (never close)", str(mislabeled)))
         live_rows = _one(con, "SELECT count(*) FROM market.historical_lines WHERE line_class='live'")
         f.append(Finding("market.live_line_observations", "PASS", "live (pre-kickoff) nflverse line observations preserved", str(live_rows)))
+        stale_live = _one(con, """SELECT count(*) FROM market.historical_lines h JOIN nfl.games g USING (game_id)
+            WHERE h.line_class='live' AND g.kickoff_utc IS NOT NULL AND h.observed_at >= g.kickoff_utc""")
+        f.append(Finding("market.live_after_kickoff", "CRITICAL" if stale_live else "PASS",
+                         "rows labeled live but observed at/after kickoff (would leak the close)", str(stale_live)))
     if _has(con, "market.odds_snapshots"):
         unmapped = _one(con, "SELECT count(DISTINCT event_id) FROM market.odds_snapshots WHERE game_id IS NULL")
         f.append(Finding("odds.unmapped_events", "WARN" if unmapped else "PASS", "odds events not matched to a game_id", str(unmapped)))
