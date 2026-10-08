@@ -18,7 +18,12 @@ nflverse:
       notes: >
         spread_line/total_line/moneylines/odds are LIVE and overwritten until kickoff; line_class=last_pull.
         referee, temp, wind, roof, result, total, home/away_qb_* are back-filled post-game: quarantined for features.
-      quarantine_columns: [referee, temp, wind, result, total, overtime, away_score, home_score, away_qb_id, home_qb_id, away_qb_name, home_qb_name]
+      quarantine_columns:   # never readable by the feature layer (docs/LEAKAGE_REGISTER.md L1-L4)
+        [spread_line, home_spread_odds, away_spread_odds, total_line, over_odds, under_odds, home_moneyline, away_moneyline,
+         referee, temp, wind, roof, stadium, stadium_id,
+         result, total, overtime, away_score, home_score,
+         away_qb_id, home_qb_id, away_qb_name, home_qb_name]
+      derived_columns: [kickoff_utc]   # gameday + gametime (America/New_York) -> UTC, computed at load
     pbp:
       tag: pbp
       file: play_by_play_{season}.parquet
@@ -46,16 +51,16 @@ nflverse:
       file: injuries_{season}.parquet
       per_season: true
       first_season: 2009
-      key: [season, week, team, gsis_id]
+      key: [season, week, team, gsis_id]   # a handful of exact duplicate rows upstream; 62 null date_modified rows in 2010 week 1
       cadence: daily 07:07 UTC in-season
-      notes: date_modified present 2010-2024, ABSENT 2025+. Each row is latest state; prior states overwritten upstream. We snapshot daily; observed_at = our retrieval time.
+      notes: date_modified present 2010-2024 (tz-aware UTC; stored as TIMESTAMPTZ), ABSENT 2025+. Each row is latest state; prior states overwritten upstream. We snapshot daily; observed_at = our retrieval time.
       snapshot_daily: true
     depth_charts:
       tag: depth_charts
       file: depth_charts_{season}.parquet
       per_season: true
       first_season: 2001
-      key_pre2025: [season, week, club_code, depth_team, position, gsis_id]
+      key_pre2025: [season, week, club_code, depth_team, position, depth_position, gsis_id]   # not unique upstream (exact duplicate rows exist); dedupe at feature time
       key_2025plus: [season, dt, team, pos_slot, pos_rank, gsis_id]
       cadence: daily 07:07 UTC
       notes: format break 2024->2025 (weekly NFL format vs ESPN daily snapshots with dt).
@@ -65,7 +70,7 @@ nflverse:
       file: roster_weekly_{season}.parquet
       per_season: true
       first_season: 2002
-      key: [season, week, team, gsis_id]
+      key: [season, week, team, gsis_id, status]   # 2010-2015 carry duplicate player-weeks differing only in status (ACT vs TRD/RES); as-of status rule: prefer ACT (audit M2)
       cadence: daily 07:07 UTC
     players:
       tag: players
@@ -77,7 +82,7 @@ nflverse:
       tag: snap_counts
       file: snap_counts_{season}.parquet
       per_season: true
-      first_season: 2012
+      first_season: 2013          # the 2012 upstream file exists but is empty (audit m3)
       key: [game_id, pfr_player_id]
       cadence: every 6h in-season (PFR)
       upstream_terms: PFR-derived; personal research use only; no redistribution
@@ -117,7 +122,7 @@ nflverse:
       file: qbr_week_level.parquet
       per_season: false
       first_season: 2006
-      key: [season, week, player_id]
+      key: [season, game_week, player_id]
       cadence: nightly in-season
       notes: not exposed by nflreadpy; fetched from the release URL directly
     participation:
@@ -129,6 +134,13 @@ nflverse:
       key: [nflverse_game_id, play_id]
       cadence: post-season dump (FTN) since 2023; NOT available in-season
       license: CC-BY-SA 4.0 (2023+)
+    schedule_lines:
+      derived: true
+      from: schedules
+      per_season: false
+      key: [game_id, snapshot_id]
+      notes: git-tracked extract of live line values for unplayed games, taken whenever the schedules snapshot changes; loaded into market.historical_lines as line_class=live
+      tracked_in_git: true
     teams:
       tag: teams
       file: teams_colors_logos.parquet

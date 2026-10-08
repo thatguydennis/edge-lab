@@ -110,7 +110,41 @@ def fetch_nflverse(
                 name, season, meta.rows, meta.snapshot_id,
             )
             out.append(meta)
+            if name == "schedules" and not meta.duplicate_of:
+                out.append(derive_schedule_lines(meta, store))
     return out
+
+
+LINE_COLUMNS = [
+    "game_id", "season", "week", "gameday", "gametime", "home_team", "away_team",
+    "spread_line", "home_spread_odds", "away_spread_odds", "total_line", "over_odds", "under_odds",
+    "home_moneyline", "away_moneyline", "home_qb_name", "away_qb_name",
+]
+
+
+def derive_schedule_lines(sched: SnapshotMeta, store: SnapshotStore) -> SnapshotMeta:
+    """Compact, git-tracked extract of the live line values for games not yet played at retrieval time.
+
+    The full schedules snapshot is rebuildable except for these values, which upstream overwrites
+    continuously (audit P1-DATA-001 M3). ~30 rows per snapshot.
+    """
+    import io
+
+    import polars as pl
+
+    df = store.read(sched)
+    today = sched.retrieved_at[:10]
+    live = df.filter(
+        (pl.col("spread_line").is_not_null() | pl.col("home_moneyline").is_not_null())
+        & (pl.col("gameday") >= today)
+    ).select([c for c in LINE_COLUMNS if c in df.columns])
+    buf = io.BytesIO()
+    live.write_parquet(buf)
+    return store.put(
+        source=NFLVERSE_SOURCE, dataset="schedule_lines", season=None, url=sched.url + "#lines",
+        data=buf.getvalue(), ext="parquet", last_modified=sched.last_modified, retrieved_at=sched.retrieved_at,
+        extra={"derived_from": sched.snapshot_id},
+    )
 
 
 def fetch_nfldata_csv(name: str, *, settings: Settings | None = None, store: SnapshotStore | None = None) -> SnapshotMeta:

@@ -39,5 +39,13 @@ Reproduced on a second machine (Dennis's Mac workspace): identical row counts an
 RECOMMENDATION: accept as the Phase 1 foundation; proceed to Phase 2 (as-of feature builder) after the data audit.
 FILES / ARTIFACTS PRODUCED: src/edgelab/{config.py,cli.py,ingest/*,db/*,quality/*,pricing/odds.py}, config/*.yaml,
 docs/LEAKAGE_REGISTER.md, data/metadata/snapshots.jsonl, reports/quality/dq_20261008T131611Z.md, tests/.
-AUDIT STATUS: NOT_AUDITED
-NEXT ACTION: auditor — data audit (checklist .claude/agents/auditor/checklists/data.md).
+AUDIT STATUS: REVISION_REQUIRED (audit 1, artifacts/audit/P1-DATA-001.audit.md) → revised, re-audit requested
+REVISION (2026-10-08, after audit 1):
+- B1 fixed: tz-aware upstream timestamps now stored as TIMESTAMPTZ on the ALTER path; `connect()` sets TimeZone=UTC; verified 2024-09-06 19:05:30 UTC round-trips; DQ checks `time.naive_timestamp_columns`, `injuries.date_modified_tz`; unit test tests/schema/test_timezones.py.
+- M1 fixed: quarantine list now covers L1–L4 (lines, roof, stadium, results, QB columns); test tests/leakage/test_quarantine.py parses the register.
+- M2 documented: rosters_weekly key includes status; as-of rule "prefer ACT" recorded in config/sources.yaml.
+- M3 fixed: git-tracked `schedule_lines` extract (live values for unplayed games) derived from every changed schedules snapshot and appended to market.historical_lines as line_class='live'; completed games keep 'last_pull'. 29 live rows preserved for week 5–6 today.
+- M4 fixed: `nfl.games.kickoff_utc` derived from gameday+gametime (America/New_York → UTC); DQ check; unit test for London/ET/null cases.
+- minors: unique snapshot ids on same-second collisions; tables stamped with the primary snapshot id; snap_counts first_season=2013; corrected keys for espn_qbr_week/depth_charts/injuries/rosters; DQ check for 2010 null date_modified (62 rows, WARN); DQ check count is now 23.
+- Audit verdict recorded via `edgelab audit record` (lab.audit_results).
+NEXT ACTION: auditor — scoped re-audit (timestamps raw-vs-loaded, quarantine vs L1–L4, rosters key rule, schedule-line persistence, kickoff_utc samples).

@@ -31,7 +31,7 @@ ALL_DATASETS = [
     "depth_charts", "rosters_weekly", "snap_counts", "pfr_advstats_week_pass", "pfr_advstats_week_def",
     "ftn_charting", "ngs_passing", "espn_qbr_week",
 ]
-DAILY_DATASETS = ["schedules", "injuries", "depth_charts", "rosters_weekly"]
+DAILY_DATASETS = ["schedules", "injuries", "depth_charts", "rosters_weekly"]  # schedules also derives schedule_lines
 
 
 def _setup_logging(verbose: bool) -> None:
@@ -108,6 +108,7 @@ def db_load(
         build_historical_lines_from_games,
         load_dataset,
         load_reference,
+        load_schedule_line_snapshots,
         sync_snapshot_index,
     )
     from edgelab.db.load_odds import load_odds_snapshots
@@ -128,7 +129,8 @@ def db_load(
         res = load_dataset(name, seas, con=con, store=store)
         console.print(f"[bold]{name}[/]: " + (", ".join(f"{t}@{s}={r}" for t, s, r in res) if res else "nothing new"))
     if "schedules" in wanted:
-        console.print(f"market.historical_lines (nflverse last_pull): {build_historical_lines_from_games(con)} rows")
+        console.print(f"market.historical_lines (nflverse): {build_historical_lines_from_games(con)} rows")
+        console.print(f"live schedule-line snapshots appended: {load_schedule_line_snapshots(con, store)} rows")
     console.print(f"odds snapshots loaded: {load_odds_snapshots(con, store)} rows")
     con.close()
 
@@ -154,6 +156,34 @@ def quality(season: int | None = typer.Option(None), verbose: bool = typer.Optio
     con.close()
     if action == "stop":
         raise typer.Exit(code=2)
+
+
+audit_app = typer.Typer(help="Audit records")
+app.add_typer(audit_app, name="audit")
+
+
+@audit_app.command("record")
+def audit_record(
+    task_id: str = typer.Argument(...),
+    audit_type: str = typer.Option(..., help="data | leakage | backtest | prediction"),
+    verdict: str = typer.Option(..., help="APPROVED | APPROVED_WITH_CONDITIONS | REVISION_REQUIRED | REJECTED"),
+    blockers: int = typer.Option(0), majors: int = typer.Option(0), minors: int = typer.Option(0),
+    reaudit: bool = typer.Option(False), report: str = typer.Option(..., help="path to the .audit.md"),
+) -> None:
+    """Record an auditor verdict in lab.audit_results (the auditor itself never writes to the DB)."""
+    import subprocess
+    import uuid
+
+    from edgelab.db import connect
+
+    commit = subprocess.run(["git", "rev-parse", "--short", "HEAD"], capture_output=True, text=True, cwd=get_settings().root).stdout.strip()
+    con = connect()
+    con.execute(
+        "INSERT INTO lab.audit_results (audit_id, task_id, audit_type, verdict, blockers, majors, minors, reaudit, commit, report_path) VALUES (?,?,?,?,?,?,?,?,?,?)",
+        [str(uuid.uuid4()), task_id, audit_type, verdict, blockers, majors, minors, reaudit, commit, report],
+    )
+    con.close()
+    console.print(f"recorded {task_id} {audit_type} {verdict} @ {commit}")
 
 
 @app.command("status")

@@ -1,0 +1,35 @@
+== rosters_weekly dupes on (season,week,team,gsis_id) ==
+null gsis_id rows: (142,)
+dupes with non-null gsis: (8752,)
+exact full-row duplicates (all cols): (0,)
+[(2010, 1564), (2011, 1098), (2012, 1147), (2013, 1646), (2014, 1520), (2015, 1777)]
+[(2010, 1, 'ARZ', '00-0025527', 'Brandon McDonald', 'CB', 'RES', 'REG'), (2010, 1, 'ARZ', '00-0025527', 'Brandon McDonald', 'CB', 'TRD', 'REG'), (2010, 1, 'ARZ', '00-0026788', 'Cyril Obiozor', 'OLB', 'ACT', 'REG'), (2010, 1, 'ARZ', '00-0026788', 'Cyril Obiozor', 'OLB', 'TRC', 'REG'), (2010, 1, 'BLT', '00-0013282', 'Trevor Pryce', 'DE', 'ACT', 'REG'), (2010, 1, 'BLT', '00-0013282', 'Trevor Pryce', 'DE', 'TRD', 'REG'), (2010, 1, 'BLT', '00-0022049', 'Ken Hamlin', 'FS', 'TRD', 'REG'), (2010, 1, 'BLT', '00-0022049', 'Ken Hamlin', 'FS', 'ACT', 'REG')]
+dupes on (season,week,team,gsis_id,game_type): (9494,)
+
+== injury_reports dupes ==
+[('nflverse.injuries.2024.20261008T131328+0000.7ebabbba', 2024, 15, 'HOU', '00-0039359', 'Cade Stover', 'Out', '\n    ', '2024-12-15 09:17:06'), ('nflverse.injuries.2024.20261008T131328+0000.7ebabbba', 2024, 15, 'HOU', '00-0039359', 'Cade Stover', 'Questionable', '\n    ', '2024-12-14 22:34:33'), ('nflverse.injuries.2024.20261008T131328+0000.7ebabbba', 2024, 15, 'NYJ', '00-0034270', 'Tyler Conklin', 'Out', '\n    ', '2024-12-15 08:57:00'), ('nflverse.injuries.2024.20261008T131328+0000.7ebabbba', 2024, 15, 'NYJ', '00-0034270', 'Tyler Conklin', 'Questionable', '\n    ', '2024-12-14 15:55:19')]
+null gsis_id in injuries: (0,)
+
+== depth_charts_weekly dupes ==
+columns: ['season', 'club_code', 'week', 'game_type', 'depth_team', 'last_name', 'first_name', 'football_name', 'formation', 'gsis_id', 'jersey_number', 'position', 'elias_id', 'depth_position', 'full_name', 'snapshot_id']
+exact full-row duplicates: (1718,)
+dupes on key + game_type + formation + depth_position: (1718,)
+null gsis_id: (0,)
+[(2010, 1, 'REG', 'ARI', 'Offense', '2', 'T', 'LT', '00-0021974', 'Jeremy Bridges'), (2010, 1, 'REG', 'ARI', 'Offense', '2', 'T', 'RT', '00-0021974', 'Jeremy Bridges'), (2010, 1, 'REG', 'ARI', 'Offense', '2', 'G', 'RG', '00-0022905', 'Rex Hadnot'), (2010, 1, 'REG', 'ARI', 'Offense', '2', 'G', 'LG', '00-0022905', 'Rex Hadnot'), (2010, 1, 'REG', 'ARI', 'Special Teams', '1', 'P', 'P', '00-0022954', 'Ben Graham'), (2010, 1, 'REG', 'ARI', 'Special Teams', '1', 'P', 'H', '00-0022954', 'Ben Graham')]
+
+== depth_chart_snapshots dupes ==
+columns: ['dt', 'team', 'player_name', 'espn_id', 'gsis_id', 'pos_grp_id', 'pos_grp', 'pos_id', 'pos_name', 'pos_abb', 'pos_slot', 'pos_rank', 'snapshot_id', 'season']
+exact full-row duplicates: (0,)
+null gsis_id: (31539,)
+dupes among non-null gsis: (0,)
+distinct dt per season: [(2026, 223, '2026-03-22T06:38:42Z', '2026-10-08T06:01:40Z'), (2025, 221, '2025-08-03T10:09:07Z', '2026-03-14T07:32:09Z')]
+dt format lengths: [(20, 1174266)]
+
+== snap_counts 2012 ==
+[(2013, 23799)]
+Traceback (most recent call last):
+  File "/home/claude/edge-lab/artifacts/audit/P1-DATA-001/05_dupes_detail.py", line 40, in <module>
+    print(con.execute("SELECT * FROM lab.load_runs WHERE table_name='nfl.snap_counts' AND season=2012").fetchall())
+          ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+_duckdb.InvalidInputException: Invalid Input Error: Required module 'pytz' failed to import, due to the following Python exception:
+ModuleNotFoundError: No module named 'pytz'

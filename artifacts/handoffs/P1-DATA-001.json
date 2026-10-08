@@ -14,7 +14,7 @@
   "recommendation": "accept as Phase 1 foundation; proceed to Phase 2 after data audit",
   "artifacts": ["src/edgelab", "config", "docs/LEAKAGE_REGISTER.md", "data/metadata/snapshots.jsonl", "reports/quality/dq_20261008T131611Z.md"],
   "disagreements": [],
-  "audit_status": "NOT_AUDITED",
-  "next_action": "auditor data audit",
+  "audit_status": "REVISION_REQUIRED",
+  "next_action": "auditor scoped re-audit after revision",
   "created_at": "2026-10-08T13:35:00Z"
 }

@@ -1,0 +1,107 @@
+== team codes in nfl.games not in ref.team_aliases ==
+[]
+distinct codes in games: (35,)
+codes by season range:
+shape: (8, 4)
+┌─────┬─────────────┬─────────────┬──────────────┐
+│ t   ┆ min(season) ┆ max(season) ┆ count_star() │
+│ --- ┆ ---         ┆ ---         ┆ ---          │
+│ str ┆ i32         ┆ i32         ┆ i64          │
+╞═════╪═════════════╪═════════════╪══════════════╡
+│ JAX ┆ 1999        ┆ 2026        ┆ 465          │
+│ LA  ┆ 2016        ┆ 2026        ┆ 198          │
+│ LAC ┆ 2017        ┆ 2026        ┆ 171          │
+│ LV  ┆ 2020        ┆ 2026        ┆ 119          │
+│ OAK ┆ 1999        ┆ 2019        ┆ 344          │
+│ SD  ┆ 1999        ┆ 2016        ┆ 298          │
+│ STL ┆ 1999        ┆ 2015        ┆ 282          │
+│ WAS ┆ 1999        ┆ 2026        ┆ 465          │
+└─────┴─────────────┴─────────────┴──────────────┘
+canonical of those: [('JAC', 'JAX', 'jaguars'), ('JAX', 'JAX', 'jaguars'), ('LA', 'LA', 'rams'), ('LAC', 'LAC', 'chargers'), ('LAR', 'LA', 'rams'), ('LV', 'LV', 'raiders'), ('OAK', 'LV', 'raiders'), ('SD', 'LAC', 'chargers'), ('STL', 'LA', 'rams'), ('WAS', 'WAS', 'commanders'), ('WFT', 'WAS', 'commanders')]
+ref.team_aliases: alias count, distinct canonical, canonical not self-aliased: (60, 32) []
+ref.teams abbrs not in aliases: []
+
+== team codes in other tables not in aliases ==
+nfl.plays.posteam: []
+nfl.plays.home_team: []
+nfl.plays.away_team: []
+nfl.team_week_stats.team: []
+nfl.team_week_stats.opponent_team: []
+nfl.player_week_stats.team: []
+nfl.rosters_weekly.team: []
+nfl.injury_reports.team: []
+nfl.snap_counts.team: []
+nfl.depth_charts_weekly.club_code: []
+nfl.depth_chart_snapshots.team: []
+nfl.pfr_pass_week.team: []
+nfl.pfr_def_week.team: []
+nfl.ngs_passing.team_abbr: []
+nfl.espn_qbr_week.team_abb: []
+
+== duplicate keys ==
+nfl.games game_id: 0
+nfl.plays (game_id,play_id): 0
+nfl.team_week_stats (season,week,team): 0
+nfl.team_week_stats (season,week,team,season_type): 0
+nfl.player_week_stats (season,week,player_id,team): 0
+nfl.player_week_stats (season,week,player_id): 0
+nfl.rosters_weekly (season,week,team,gsis_id): 9501
+nfl.snap_counts (game_id,pfr_player_id): 0
+nfl.pfr_pass_week (game_id,pfr_player_id): 0
+nfl.pfr_def_week (game_id,pfr_player_id): 0
+nfl.ftn_charting (nflverse_game_id,nflverse_play_id): 0
+nfl.ngs_passing (season,week,player_gsis_id): 0
+nfl.ngs_passing (season,season_type,week,player_gsis_id): 0
+nfl.espn_qbr_week (season,week,player_id): ERR Binder Error: Referenced column "week" not found in FROM clause!
+Candidate bindings: "week_num", "week_text", "rank", "sack", "team"
+
+LINE 1: SELECT c
+nfl.espn_qbr_week (season,season_type,week,player_id): 0
+nfl.injury_reports (snapshot,season,week,team,gsis_id): 2
+nfl.injury_reports (season,week,team,gsis_id) across snapshots: 2
+nfl.depth_charts_weekly key_pre2025: 51749
+nfl.depth_chart_snapshots key_2025plus: 769
+ref.players gsis_id: 0
+market.historical_lines (game_id,source,book_id,line_class): 0
+
+== games whose game_id is in plays but not in games / vice versa ==
+plays games not in nfl.games: (0,)
+completed games 2010+ without plays: []
+
+== quarantine list vs leakage register ==
+nfl.games columns: ['game_id', 'season', 'game_type', 'week', 'gameday', 'weekday', 'gametime', 'away_team', 'away_score', 'home_team', 'home_score', 'location', 'result', 'total', 'overtime', 'old_game_id', 'gsis', 'nfl_detail_id', 'pfr', 'pff', 'espn', 'ftn', 'away_rest', 'home_rest', 'away_moneyline', 'home_moneyline', 'spread_line', 'away_spread_odds', 'home_spread_odds', 'total_line', 'under_odds', 'over_odds', 'div_game', 'roof', 'surface', 'temp', 'wind', 'away_qb_id', 'home_qb_id', 'away_qb_name', 'home_qb_name', 'away_coach', 'home_coach', 'referee', 'stadium_id', 'stadium', 'snapshot_id']
+register tokens: ['*_moneyline', '*_spread_odds', 'apy', 'as_of', 'away_qb_*', 'away_score', 'date_modified', 'dt', 'home_qb_*', 'home_score', 'is_active', 'last_season', 'observed_at', 'over/under_odds', 'overtime', 'referee', 'result', 'roof', 'snapshot_id', 'spread_line', 'stadium', 'stats_team_reg', 'status', 'temp', 'total', 'total_line', 'untimestamped', 'wind', 'year_signed']
+nfl.games columns named in register: ['away_moneyline', 'away_qb_id', 'away_qb_name', 'away_score', 'away_spread_odds', 'home_moneyline', 'home_qb_id', 'home_qb_name', 'home_score', 'home_spread_odds', 'over_odds', 'overtime', 'referee', 'result', 'roof', 'snapshot_id', 'spread_line', 'stadium', 'temp', 'total', 'total_line', 'under_odds', 'wind']
+quarantine list: ['away_qb_id', 'away_qb_name', 'away_score', 'home_qb_id', 'home_qb_name', 'home_score', 'overtime', 'referee', 'result', 'temp', 'total', 'wind']
+register-named columns NOT in quarantine: ['away_moneyline', 'away_spread_odds', 'home_moneyline', 'home_spread_odds', 'over_odds', 'roof', 'snapshot_id', 'spread_line', 'stadium', 'total_line', 'under_odds']
+quarantine columns not in nfl.games: []
+
+== timezone handling: gameday/gametime types and sample ==
+[('game_id', 'VARCHAR'), ('gameday', 'VARCHAR'), ('gametime', 'VARCHAR'), ('season', 'INTEGER'), ('week', 'INTEGER'), ('weekday', 'VARCHAR')]
+[('2025_01_DAL_PHI', '2025-09-04', '20:20', 'Thursday', 'Home'), ('2025_01_KC_LAC', '2025-09-05', '20:00', 'Friday', 'Neutral'), ('2025_01_TB_ATL', '2025-09-07', '13:00', 'Sunday', 'Home'), ('2025_01_CIN_CLE', '2025-09-07', '13:00', 'Sunday', 'Home'), ('2025_01_MIA_IND', '2025-09-07', '13:00', 'Sunday', 'Home')]
+international 2025: [('2025_01_KC_LAC', '2025-09-05', '20:00', 'SoFi Stadium'), ('2025_04_MIN_PIT', '2025-09-28', '09:30', 'Acrisure Stadium'), ('2025_05_MIN_CLE', '2025-10-05', '09:30', 'FirstEnergy Stadium'), ('2025_06_DEN_NYJ', '2025-10-12', '09:30', 'MetLife Stadium'), ('2025_07_LA_JAX', '2025-10-19', '09:30', 'TIAA Bank Stadium'), ('2025_10_ATL_IND', '2025-11-09', '09:30', 'Lucas Oil Stadium')]
+null gametime: [(1999, 259)]
+gametime distinct formats: [(None, 259), (5, 7289)]
+plays start_time/time_of_day sample: [('2025_01_ARI_NO', '2025-09-07', '9/7/25, 13:02:38', '2025-09-07T17:02:38.787Z'), ('2025_01_ARI_NO', '2025-09-07', '9/7/25, 13:02:38', '2025-09-07T17:03:24.483Z'), ('2025_01_ARI_NO', '2025-09-07', '9/7/25, 13:02:38', '2025-09-07T17:04:01.983Z')]
+any TIMESTAMPTZ columns in nfl.* tables: [('ftn_charting', 'date_pulled', 'TIMESTAMP WITH TIME ZONE'), ('injury_reports', 'observed_at', 'TIMESTAMP WITH TIME ZONE'), ('injury_reports', 'date_modified', 'TIMESTAMP')]
+DuckDB TimeZone setting: ('America/New_York',)
+injury observed_at raw UTC: ('2026-10-08 13:12:47', '2026-10-08 09:12:47-04')
+historical_lines observed_at raw UTC: ('2026-10-08 13:12:57',)
+injury date_modified type/sample: ('TIMESTAMP',) [('2024-09-06 15:05:30',), ('2024-09-06 15:05:21',)]
+depth_chart_snapshots dt type/sample: ('VARCHAR',) [('2026-10-08T06:01:40Z',), ('2026-10-08T06:01:40Z',)]
+
+== schema drift between seasons (per-season tables): columns all-null in some seasons ==
+nfl.plays: 170 cols; columns entirely null in some seasons only: 0
+nfl.team_week_stats: 139 cols; columns entirely null in some seasons only: 0
+nfl.player_week_stats: 151 cols; columns entirely null in some seasons only: 0
+nfl.rosters_weekly: 37 cols; columns entirely null in some seasons only: 2
+   depth_chart_position: all-null in [2010, 2011, 2012, 2013, 2014, 2015]
+   ngs_position: all-null in [2010, 2011, 2012, 2013, 2014, 2015]
+nfl.snap_counts: 17 cols; columns entirely null in some seasons only: 0
+nfl.injury_reports: 19 cols; columns entirely null in some seasons only: 2
+   date_modified: all-null in [2025, 2026]
+   season_type: all-null in [2010, 2011, 2012, 2013]...[2023, 2024]
+nfl.depth_charts_weekly: 16 cols; columns entirely null in some seasons only: 0
+nfl.pfr_pass_week: 25 cols; columns entirely null in some seasons only: 0
+nfl.pfr_def_week: 30 cols; columns entirely null in some seasons only: 0
+nfl.ftn_charting: 30 cols; columns entirely null in some seasons only: 0

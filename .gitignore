@@ -8,6 +8,7 @@ data/snapshots/*
 !data/snapshots/nflverse/
 data/snapshots/nflverse/*
 !data/snapshots/nflverse/injuries/
+!data/snapshots/nflverse/schedule_lines/
 !data/snapshots/odds_api/
 data/db/
 data/cache/

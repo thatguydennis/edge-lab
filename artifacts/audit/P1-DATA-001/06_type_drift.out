@@ -1,0 +1,35 @@
+TZ-AWARE -> NAIVE TIMESTAMP (values shifted by session TimeZone)       nfl.injury_reports           date_modified                  seasons=2010..2024 (15)
+float -> INTEGER                                                       nfl.injury_reports           season                         seasons=2010..2020 (11)
+float -> INTEGER                                                       nfl.injury_reports           week                           seasons=2010..2020 (11)
+float -> INTEGER                                                       nfl.plays                    goal_to_go                     seasons=[2020, 2024, 2025, 2026]
+int -> DOUBLE                                                          nfl.rosters_weekly           height                         seasons=[2025, 2026]
+int -> VARCHAR                                                         nfl.rosters_weekly           draft_number                   seasons=2016..2026 (11)
+int -> VARCHAR                                                         nfl.rosters_weekly           jersey_number                  seasons=2016..2026 (11)
+
+raw injuries 2024 (UTC):
+shape: (5, 4)
+┌────────────┬──────┬──────┬─────────────────────────┐
+│ gsis_id    ┆ week ┆ team ┆ date_modified           │
+│ ---        ┆ ---  ┆ ---  ┆ ---                     │
+│ str        ┆ i32  ┆ str  ┆ datetime[μs, UTC]       │
+╞════════════╪══════╪══════╪═════════════════════════╡
+│ 00-0039521 ┆ 1    ┆ ARI  ┆ 2024-09-06 19:05:30 UTC │
+│ 00-0037141 ┆ 1    ┆ ARI  ┆ 2024-09-06 19:05:21 UTC │
+│ 00-0039737 ┆ 1    ┆ ARI  ┆ 2024-09-06 19:05:21 UTC │
+│ 00-0031583 ┆ 1    ┆ ATL  ┆ 2024-09-06 18:35:04 UTC │
+│ 00-0033051 ┆ 1    ┆ ATL  ┆ 2024-09-06 18:35:48 UTC │
+└────────────┴──────┴──────┴─────────────────────────┘
+stored: [('00-0039521', 1, 'ARI', '2024-09-06 15:05:30'), ('00-0037141', 1, 'ARI', '2024-09-06 15:05:21'), ('00-0039737', 1, 'ARI', '2024-09-06 15:05:21'), ('00-0031583', 1, 'ATL', '2024-09-06 14:35:04'), ('00-0033051', 1, 'ATL', '2024-09-06 14:35:48')]
+shift minutes distribution (stored - raw UTC): shape: (6, 2)
+┌───────────┬──────┐
+│ shift_min ┆ len  │
+│ ---       ┆ ---  │
+│ i64       ┆ u32  │
+╞═══════════╪══════╡
+│ -1321     ┆ 1    │
+│ -942      ┆ 1    │
+│ -300      ┆ 3348 │
+│ -240      ┆ 2867 │
+│ 342       ┆ 1    │
+│ 721       ┆ 1    │
+└───────────┴──────┘

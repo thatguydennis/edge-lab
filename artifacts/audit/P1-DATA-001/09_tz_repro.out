@@ -1,0 +1,7 @@
+session TimeZone: ('America/New_York',)
+_duck_type(Datetime tz=UTC) -> TIMESTAMP
+ALTER path: [('date_modified', 'TIMESTAMP')] [('2024-09-06 15:05:30',)]
+CREATE path: [('date_modified', 'TIMESTAMP WITH TIME ZONE')] [('2024-09-06 19:05:30',)]
+Berlin session stores: [('2024-09-06 21:05:30',)]
+UTC session stores: [('2024-09-06 19:05:30',)]
+rows 2010-2024 whose true date_modified (UTC) is Sat>=20:00 ET through Sun 05:00 ET, i.e. after cutoff but stored value looks earlier by 4-5h: (15,) (stored wall-clock ET Saturday >= 20:00; a UTC-naive comparison would treat them as 16:00-19:59 UTC... i.e. still Saturday ET afternoon)

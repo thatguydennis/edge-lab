@@ -95,6 +95,23 @@ def run_checks(con: duckdb.DuckDBPyConnection, store: SnapshotStore, season: int
     else:
         f.append(Finding("pbp.exists", "WARN", "nfl.plays not loaded"))
 
+    # timestamps must be timezone-aware everywhere (audit P1-DATA-001 B1)
+    naive = con.execute("""SELECT table_schema||'.'||table_name||'.'||column_name FROM information_schema.columns
+        WHERE table_schema IN ('nfl','market','lab') AND data_type = 'TIMESTAMP'
+          AND (column_name LIKE '%modified%' OR column_name LIKE '%observed%' OR column_name LIKE '%kickoff%'
+               OR column_name LIKE '%_at' OR column_name LIKE '%update%' OR column_name = 'dt')""").fetchall()
+    f.append(Finding("time.naive_timestamp_columns", "CRITICAL" if naive else "PASS",
+                     "event-time columns stored without timezone: " + ", ".join(r[0] for r in naive) if naive else "all event-time columns are TIMESTAMPTZ",
+                     str(len(naive))))
+    if _has(con, "nfl.injury_reports"):
+        tz_ok = _one(con, "SELECT count(*) FROM information_schema.columns WHERE table_schema='nfl' AND table_name='injury_reports' AND column_name='date_modified' AND data_type='TIMESTAMP WITH TIME ZONE'")
+        f.append(Finding("injuries.date_modified_tz", "PASS" if tz_ok else "CRITICAL", "date_modified stored as TIMESTAMPTZ (UTC)", str(tz_ok)))
+        null_dm = _one(con, "SELECT count(*) FROM nfl.injury_reports WHERE season BETWEEN 2010 AND 2024 AND date_modified IS NULL")
+        f.append(Finding("injuries.null_date_modified_2010_2024", "WARN" if null_dm else "PASS", "2010-2024 rows without date_modified (unusable as-of)", str(null_dm)))
+    if _has(con, "nfl.games"):
+        no_kick = _one(con, "SELECT count(*) FROM nfl.games WHERE kickoff_utc IS NULL AND gametime IS NOT NULL")
+        f.append(Finding("games.kickoff_utc", "CRITICAL" if no_kick else "PASS", "games with gametime but no derived kickoff_utc", str(no_kick)))
+
     # injuries: timestamp availability
     if _has(con, "nfl.injury_reports"):
         cols = [r[0] for r in con.execute("SELECT column_name FROM information_schema.columns WHERE table_schema='nfl' AND table_name='injury_reports'").fetchall()]
@@ -119,8 +136,10 @@ def run_checks(con: duckdb.DuckDBPyConnection, store: SnapshotStore, season: int
     if _has(con, "market.historical_lines"):
         bad = _one(con, "SELECT count(*) FROM market.historical_lines WHERE source IS NULL OR book_id IS NULL OR line_class IS NULL OR snapshot_id IS NULL")
         f.append(Finding("market.provenance", "CRITICAL" if bad else "PASS", "line rows missing source/book/line_class/snapshot", str(bad)))
-        mislabeled = _one(con, "SELECT count(*) FROM market.historical_lines WHERE source='nflverse' AND line_class <> 'last_pull'")
-        f.append(Finding("market.nflverse_line_class", "CRITICAL" if mislabeled else "PASS", "nflverse lines must be last_pull", str(mislabeled)))
+        mislabeled = _one(con, "SELECT count(*) FROM market.historical_lines WHERE source='nflverse' AND line_class NOT IN ('last_pull','live')")
+        f.append(Finding("market.nflverse_line_class", "CRITICAL" if mislabeled else "PASS", "nflverse lines must be last_pull or live (never close)", str(mislabeled)))
+        live_rows = _one(con, "SELECT count(*) FROM market.historical_lines WHERE line_class='live'")
+        f.append(Finding("market.live_line_observations", "PASS", "live (pre-kickoff) nflverse line observations preserved", str(live_rows)))
     if _has(con, "market.odds_snapshots"):
         unmapped = _one(con, "SELECT count(DISTINCT event_id) FROM market.odds_snapshots WHERE game_id IS NULL")
         f.append(Finding("odds.unmapped_events", "WARN" if unmapped else "PASS", "odds events not matched to a game_id", str(unmapped)))

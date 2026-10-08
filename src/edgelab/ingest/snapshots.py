@@ -138,6 +138,11 @@ class SnapshotStore:
         prev = self.latest(source, dataset, season)
         season_tag = str(season) if season is not None else "all"
         snapshot_id = f"{source}.{dataset}.{season_tag}.{_compact_ts(retrieved_at)}.{digest[:8]}"
+        existing_ids = set(self.index()["snapshot_id"].to_list()) if not self.index().is_empty() else set()
+        n = 1
+        while snapshot_id in existing_ids:  # same second, same bytes: keep ids unique (audit m1)
+            n += 1
+            snapshot_id = f"{source}.{dataset}.{season_tag}.{_compact_ts(retrieved_at)}.{digest[:8]}.{n}"
 
         if prev is not None and prev.sha256 == digest:
             prev_file = self.root / prev.path
@@ -186,7 +191,7 @@ class SnapshotStore:
         raise ValueError(f"unsupported snapshot ext {meta.ext}")
 
     # Datasets whose snapshot files are committed to git and must therefore exist on every machine.
-    TRACKED_DATASETS = ("injuries", "odds_nfl")
+    TRACKED_DATASETS = ("injuries", "schedule_lines", "odds_nfl")
 
     def verify_all(self) -> list[str]:
         """Return a list of problems (empty = every locally present snapshot matches its sha256 and

@@ -1,0 +1,42 @@
+[('bd9763a7-58da-441a-920a-48265bce6a6a', 'nfl.snap_counts', 2012, 'nflverse.snap_counts.2012.20261008T131343+0000.1068d1f4', 0, '2026-10-08 09:15:59.141837-04', 'v0.1')]
+injuries 2010 null date_modified by week: [(1, 62)]
+espn_qbr cols: ['season', 'season_type', 'game_id', 'game_week', 'week_text', 'team_abb', 'player_id', 'name_short', 'rank', 'qbr_total', 'pts_added', 'qb_plays', 'epa_total', 'pass', 'run', 'exp_sack', 'penalty', 'qbr_raw', 'sack', 'name_first', 'name_last', 'name_display', 'headshot_href', 'team', 'opp_id', 'opp_abb', 'opp_team', 'opp_name', 'week_num', 'qualified', 'snapshot_id']
+schedules gameday/gametime: pyarrow.Field<gameday: string> pyarrow.Field<gametime: string>
+injuries 2026 raw columns: ['season', 'season_type', 'game_type', 'team', 'week', 'gsis_id', 'position', 'full_name', 'first_name', 'last_name', 'report_primary_injury', 'report_secondary_injury', 'report_status', 'practice_primary_injury', 'practice_secondary_injury', 'practice_status']
+pbp 2025 ncols: 372 time_of_day: pyarrow.Field<time_of_day: string> start_time: pyarrow.Field<start_time: string>
+injuries 2024 raw schema date_modified: pyarrow.Field<date_modified: timestamp[us, tz=UTC]>
+shape: (3, 1)
+┌─────────────────────────┐
+│ date_modified           │
+│ ---                     │
+│ datetime[μs, UTC]       │
+╞═════════════════════════╡
+│ 2024-09-06 19:05:30 UTC │
+│ 2024-09-06 19:05:21 UTC │
+│ 2024-09-06 19:05:21 UTC │
+└─────────────────────────┘
+ftn date_pulled: pyarrow.Field<date_pulled: timestamp[us, tz=UTC]>
+injuries 2026 by week: [(1, 182), (2, 251), (3, 301), (4, 318), (5, 222)]
+injuries 2025 by week sample: [(1, 197), (2, 256), (3, 281), (4, 290), (5, 286), (6, 333), (7, 323), (8, 296), (9, 316), (10, 320), (11, 364), (12, 337), (13, 348), (14, 309), (15, 360), (16, 390), (17, 394), (18, 383), (19, 136), (20, 85), (21, 44), (22, 20)]
+injury cols: ['season', 'season_type', 'game_type', 'team', 'week', 'gsis_id', 'position', 'full_name', 'first_name', 'last_name', 'report_primary_injury', 'report_secondary_injury', 'report_status', 'practice_primary_injury', 'practice_secondary_injury', 'practice_status', 'snapshot_id', 'observed_at', 'date_modified']
+[('2026_05_TB_DAL', '2026-10-08', '20:15', 8.5, -470, 360, 47.5, None), ('2026_05_PHI_JAX', '2026-10-11', '09:30', 7.0, -360, 285, 41.5, None), ('2026_05_CHI_GB', '2026-10-11', '13:00', -1.5, 110, -130, 45.5, None), ('2026_05_CIN_MIA', '2026-10-11', '13:00', -6.5, 245, -305, 42.5, None)]
+historical_lines rows for unplayed games: (29,)
+notes value: [('live/overwritten upstream; ≈close only for completed games',)]
+weekday mismatch vs gameday: (0,)
+[('2026_05_TB_DAL', '2026-10-08', '20:15', 'Thursday')]
+[(1.4, 0.4, 6008)]
+rosters 2026 weeks: [(1, 2963), (2, 2528), (3, 2545), (4, 2576), (5, 2433)]
+team_week_stats 2025 by type: [('REG', 544, 1, 18), ('POST', 26, 19, 22)]
+team_week_stats 2026: [(1, 32), (2, 32), (3, 32), (4, 32)]
+plays for unplayed games: (0,)
+plays epa exactly 0 on pass/run: (0.0,)
+plays null wp pct: (0.58, 0.58)
+games temp/wind null by roof: [('open', 75, 74), ('', 34, 34), ('dome', 705, 704), ('outdoors', 3266, 260), ('closed', 555, 554)]
+games 2010+ null referee/stadium/qb: (1, 0, 0, 0)
+2026 unplayed games with qb/referee filled (post-game columns populated pre-game?): (15, 0, 0, 208)
+moneyline sanity: both negative / both positive: (128, 0, 0)
+spread odds range: (-140, 126, 28.5, 63.5, -18.0, 27.0)
+spread_line = 0 count: (5,)
+ML implied vig range: (0.981, 1.049, 1.029)
+ref.teams cols: ['team_abbr', 'team_name', 'team_id', 'team_nick', 'team_conf', 'team_division', 'team_color', 'team_color2', 'team_color3', 'team_color4']
+ref.teams abbrs: ('ARI,ATL,BAL,BUF,CAR,CHI,CIN,CLE,DAL,DEN,DET,GB,HOU,IND,JAX,KC,LA,LAC,LAR,LV,MIA,MIN,NE,NO,NYG,NYJ,OAK,PHI,PIT,SD,SEA,SF,STL,TB,TEN,WAS',)

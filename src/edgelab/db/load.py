@@ -114,7 +114,7 @@ def _duck_type(dtype: pl.DataType) -> str:
     if dtype == pl.Date:
         return "DATE"
     if isinstance(dtype, pl.Datetime):
-        return "TIMESTAMP"
+        return "TIMESTAMPTZ" if dtype.time_zone else "TIMESTAMP"
     return "VARCHAR"
 
 
@@ -149,7 +149,7 @@ def _insert(con: duckdb.DuckDBPyConnection, table: str, df: pl.DataFrame) -> int
 def _record_load(con: duckdb.DuckDBPyConnection, table: str, season: int | None, meta: SnapshotMeta, rows: int) -> None:
     con.execute(
         "INSERT INTO lab.load_runs (load_id, table_name, season, snapshot_id, rows_loaded, loaded_at, code_version) VALUES (?, ?, ?, ?, ?, ?, ?)",
-        [str(uuid.uuid4()), table, season, meta.snapshot_id, rows, _utc_now(), CODE_VERSION],
+        [str(uuid.uuid4()), table, season, stamp_id(meta), rows, _utc_now(), CODE_VERSION],
     )
 
 
@@ -160,11 +160,25 @@ def _already_loaded(con: duckdb.DuckDBPyConnection, table: str, snapshot_id: str
     return bool(row and row[0])
 
 
+def stamp_id(meta: SnapshotMeta) -> str:
+    """The id of the snapshot whose bytes are loaded: the primary file, not a 'checked, unchanged' record."""
+    return meta.duplicate_of or meta.snapshot_id
+
+
 def _prepare(df: pl.DataFrame, meta: SnapshotMeta, dataset: str) -> pl.DataFrame:
     if dataset == "pbp":
         keep = [c for c in PBP_COLUMNS if c in df.columns]
         df = df.select(keep)
-    df = df.with_columns(pl.lit(meta.snapshot_id).alias("snapshot_id"))
+    if dataset == "schedules" and {"gameday", "gametime"} <= set(df.columns):
+        # nflverse gametime is Eastern wall-clock (London games show 09:30). Derive the UTC kickoff once, here.
+        df = df.with_columns(
+            pl.when(pl.col("gametime").is_not_null())
+            .then((pl.col("gameday") + " " + pl.col("gametime")).str.to_datetime("%Y-%m-%d %H:%M", strict=False)
+                  .dt.replace_time_zone("America/New_York", ambiguous="earliest").dt.convert_time_zone("UTC"))
+            .otherwise(None)
+            .alias("kickoff_utc")
+        )
+    df = df.with_columns(pl.lit(stamp_id(meta)).alias("snapshot_id"))
     if meta.season is not None and "season" not in df.columns:
         df = df.with_columns(pl.lit(meta.season).cast(pl.Int32).alias("season"))
     # Normalize problematic dtypes for DuckDB arrow ingestion
@@ -213,7 +227,7 @@ def load_dataset(
         for row in q.sort("retrieved_at").to_dicts():
             meta = SnapshotMeta(**{k: row.get(k) for k in SnapshotMeta.__dataclass_fields__})
             table = _target_table(dataset, pl.DataFrame())
-            if _already_loaded(con, table, meta.snapshot_id):
+            if _already_loaded(con, table, stamp_id(meta)):
                 continue
             df = _prepare(store.read(meta), meta, dataset).with_columns(
                 pl.lit(meta.retrieved_at).str.to_datetime(time_zone="UTC").alias("observed_at")
@@ -234,8 +248,8 @@ def load_dataset(
             continue
         df = _prepare(store.read(meta), meta, dataset)
         table = _target_table(dataset, df)
-        if _already_loaded(con, table, meta.snapshot_id):
-            log.info("already loaded %s %s", table, meta.snapshot_id)
+        if _already_loaded(con, table, stamp_id(meta)):
+            log.info("already loaded %s %s", table, stamp_id(meta))
             continue
         _ensure_table(con, table, df)
         con.begin()
@@ -321,12 +335,14 @@ def sync_snapshot_index(con: duckdb.DuckDBPyConnection, store: SnapshotStore) ->
 
 
 def build_historical_lines_from_games(con: duckdb.DuckDBPyConnection) -> int:
-    """nflverse schedule lines → market.historical_lines with line_class='last_pull'.
+    """nflverse schedule lines for COMPLETED games → market.historical_lines, line_class='last_pull'.
 
     Betting convention: spread_home is negative when home is favored. nflverse `spread_line` is
     positive when home is favored (it equals the expected home margin), so spread_home = -spread_line.
+    Pre-kickoff values are not taken from here (they are overwritten upstream); they come from the
+    git-tracked schedule_lines snapshots via load_schedule_line_snapshots (line_class='live').
     """
-    con.execute("DELETE FROM market.historical_lines WHERE source = 'nflverse'")
+    con.execute("DELETE FROM market.historical_lines WHERE source = 'nflverse' AND line_class = 'last_pull'")
     con.execute(
         """
         INSERT INTO market.historical_lines
@@ -336,10 +352,46 @@ def build_historical_lines_from_games(con: duckdb.DuckDBPyConnection) -> int:
                g.total_line, g.over_odds, g.under_odds,
                g.home_moneyline, g.away_moneyline,
                g.snapshot_id,
-               'live/overwritten upstream; ≈close only for completed games'
+               'nflverse schedule line after kickoff (≈close); book unknown'
         FROM nfl.games g
         LEFT JOIN lab.snapshots s ON s.snapshot_id = g.snapshot_id
-        WHERE g.spread_line IS NOT NULL OR g.home_moneyline IS NOT NULL
+        WHERE (g.spread_line IS NOT NULL OR g.home_moneyline IS NOT NULL)
+          AND g.result IS NOT NULL
         """
     )
     return con.execute("SELECT count(*) FROM market.historical_lines WHERE source='nflverse'").fetchone()[0]
+
+
+def load_schedule_line_snapshots(con: duckdb.DuckDBPyConnection, store: SnapshotStore) -> int:
+    """Append every git-tracked schedule_lines snapshot (live values for unplayed games) to
+    market.historical_lines with line_class='live'. Idempotent per snapshot."""
+    idx = store.index()
+    if idx.is_empty():
+        return 0
+    q = idx.filter((pl.col("source") == "nflverse") & (pl.col("dataset") == "schedule_lines") & pl.col("duplicate_of").is_null())
+    loaded = {r[0] for r in con.execute("SELECT DISTINCT snapshot_id FROM market.historical_lines WHERE line_class='live'").fetchall()}
+    total = 0
+    for row in q.sort("retrieved_at").to_dicts():
+        meta = SnapshotMeta(**{k: row.get(k) for k in SnapshotMeta.__dataclass_fields__})
+        if meta.snapshot_id in loaded or not (store.root / meta.path).exists():
+            continue
+        df = store.read(meta)
+        if df.is_empty():
+            continue
+        df = df.with_columns(
+            pl.lit(meta.retrieved_at).str.to_datetime(time_zone="UTC").alias("observed_at"),
+            pl.lit(meta.snapshot_id).alias("snapshot_id"),
+        )
+        con.register("_lines", df.to_arrow())
+        con.execute(
+            """
+            INSERT INTO market.historical_lines
+            SELECT game_id, 'nflverse', 'nflverse', 'live', observed_at,
+                   -spread_line, home_spread_odds, away_spread_odds, total_line, over_odds, under_odds,
+                   home_moneyline, away_moneyline, snapshot_id, 'nflverse live line extract; book unknown'
+            FROM _lines
+            """
+        )
+        con.unregister("_lines")
+        total += df.height
+    return total

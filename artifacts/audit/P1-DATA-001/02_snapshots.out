@@ -1,0 +1,29 @@
+index rows: 153
+unique snapshot_id: 152
+duplicate_of rows: 8
+datasets: Counter({('nflverse', 'injuries'): 18, ('nflverse', 'depth_charts'): 18, ('nflverse', 'rosters_weekly'): 18, ('nflverse', 'pbp'): 17, ('nflverse', 'stats_team_week'): 17, ('nflverse', 'stats_player_week'): 17, ('nflverse', 'snap_counts'): 15, ('nflverse', 'pfr_advstats_week_pass'): 9, ('nflverse', 'pfr_advstats_week_def'): 9, ('nflverse', 'ftn_charting'): 5, ('nflverse', 'schedules'): 4, ('nflverse', 'teams'): 2, ('nflverse', 'players'): 2, ('nflverse', 'ngs_passing'): 1, ('nflverse', 'espn_qbr_week'): 1})
+missing fields: {}
+retrieved_at range: 2026-10-08T13:08:04+00:00 2026-10-08T13:13:59+00:00
+primary snapshots: 145 unique paths: 145
+absent files: 0 []
+meta.json missing: 0
+meta/index field diffs: 0 []
+byte-size mismatches: []
+hashed 145 files; mismatches: 0 []
+nflverse.depth_charts.2011.20261008T131330+0000.22251d8a     file=ok meta=ok lm=Sun, 04 Aug 2024 21:32:51 GMT
+nflverse.pbp.2015.20261008T131302+0000.01b5ae7d              file=ok meta=ok lm=Wed, 30 Apr 2025 06:33:27 GMT
+nflverse.snap_counts.2019.20261008T131345+0000.ef9068cc      file=ok meta=ok lm=Mon, 06 Oct 2025 06:51:03 GMT
+nflverse.injuries.2014.20261008T131325+0000.720a8d4b         file=ok meta=ok lm=Tue, 26 Jul 2022 05:22:51 GMT
+nflverse.stats_team_week.2026.20261008T131317+0000.42addfcb  file=ok meta=ok lm=Thu, 08 Oct 2026 09:04:38 GMT
+nflverse.injuries.2024.20261008T131328+0000.7ebabbba         file=ok meta=ok lm=Thu, 13 Feb 2025 07:16:35 GMT
+nflverse.pbp.2026.20261008T131311+0000.07c3d3c9              file=ok meta=ok lm=Thu, 08 Oct 2026 09:02:50 GMT
+nflverse.stats_player_week.2024.20261008T131323+0000.847569d1 file=ok meta=ok lm=Thu, 13 Aug 2026 16:49:10 GMT
+nflverse.depth_charts.2016.20261008T131331+0000.1f217ac2     file=ok meta=ok lm=Sun, 04 Aug 2024 21:39:10 GMT
+nflverse.stats_player_week.2025.20261008T131323+0000.2a461bec file=ok meta=ok lm=Thu, 13 Aug 2026 16:51:21 GMT
+nflverse.rosters_weekly.2025.20261008T131342+0000.a8764c94   file=ok meta=ok lm=Sat, 14 Mar 2026 07:33:05 GMT
+nflverse.stats_team_week.2018.20261008T131315+0000.e4731ac0  file=ok meta=ok lm=Thu, 13 Aug 2026 16:44:59 GMT
+duplicate_of rows pointing at missing/different sha: []
+distinct snapshot_ids in DB: 144 not in index: []
+DB snapshot ids that are duplicate_of rows (should be none): ['nflverse.teams.all.20261008T131257+0000.46955c6d', 'nflverse.depth_charts.2026.20261008T131336+0000.241a0401', 'nflverse.rosters_weekly.2026.20261008T131342+0000.3989b0a5', 'nflverse.schedules.all.20261008T131257+0000.58fc64e7', 'nflverse.players.all.20261008T131258+0000.f5f0ad6a']
+loaded snapshots that are not the latest primary for their key: []
+indexed primary keys not loaded: [('snap_counts', 2012)]
