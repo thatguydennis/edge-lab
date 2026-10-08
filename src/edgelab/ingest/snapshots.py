@@ -176,8 +176,13 @@ class SnapshotStore:
             return pl.read_csv(io.BytesIO(data), infer_schema_length=10000, ignore_errors=True)
         raise ValueError(f"unsupported snapshot ext {meta.ext}")
 
+    # Datasets whose snapshot files are committed to git and must therefore exist on every machine.
+    TRACKED_DATASETS = ("injuries", "odds_nfl")
+
     def verify_all(self) -> list[str]:
-        """Return a list of problems (empty = all snapshot files match their recorded sha256)."""
+        """Return a list of problems (empty = every locally present snapshot matches its sha256 and
+        every git-tracked snapshot is present). Snapshots of rebuildable datasets that are absent on
+        this machine are not problems (the index is shared across machines; the lake is per machine)."""
         problems: list[str] = []
         idx = self.index()
         if idx.is_empty():
@@ -189,8 +194,17 @@ class SnapshotStore:
             seen.add(row["path"])
             p = self.root / row["path"]
             if not p.exists():
-                problems.append(f"missing file: {row['path']} ({row['snapshot_id']})")
+                if row["dataset"] in self.TRACKED_DATASETS:
+                    problems.append(f"missing tracked file: {row['path']} ({row['snapshot_id']})")
                 continue
             if sha256_bytes(p.read_bytes()) != row["sha256"]:
                 problems.append(f"hash mismatch: {row['path']} ({row['snapshot_id']})")
         return problems
+
+    def absent_locally(self) -> int:
+        """Count of indexed snapshot files not present on this machine (informational)."""
+        idx = self.index()
+        if idx.is_empty():
+            return 0
+        paths = {r["path"] for r in idx.filter(pl.col("duplicate_of").is_null()).to_dicts()}
+        return sum(1 for p in paths if not (self.root / p).exists())

@@ -41,8 +41,10 @@ def run_checks(con: duckdb.DuckDBPyConnection, store: SnapshotStore, season: int
     # --- snapshot integrity ---------------------------------------------------------------
     problems = store.verify_all()
     f.append(Finding("snap.integrity", "CRITICAL" if problems else "PASS",
-                     "all snapshot files match recorded sha256" if not problems else "; ".join(problems[:5]),
+                     "all local snapshot files match recorded sha256; tracked snapshots present" if not problems else "; ".join(problems[:5]),
                      str(len(problems))))
+    absent = store.absent_locally()
+    f.append(Finding("snap.absent_locally", "PASS", "indexed snapshots not on this machine (rebuildable; run edgelab ingest)", str(absent)))
 
     if not _has(con, "nfl.games"):
         f.append(Finding("games.exists", "CRITICAL", "nfl.games not loaded"))

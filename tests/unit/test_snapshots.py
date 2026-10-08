@@ -33,3 +33,13 @@ def test_changed_content_makes_new_file(tmp_settings):
     m1 = store.put(source="t", dataset="d", season=None, url="u", data=_parquet_bytes(pl.DataFrame({"a": [1]})), ext="parquet")
     m2 = store.put(source="t", dataset="d", season=None, url="u", data=_parquet_bytes(pl.DataFrame({"a": [2]})), ext="parquet")
     assert m1.path != m2.path and m2.duplicate_of is None
+
+
+def test_absent_rebuildable_is_not_a_problem_but_tracked_is(tmp_settings):
+    store = SnapshotStore(tmp_settings)
+    m = store.put(source="nflverse", dataset="pbp", season=2024, url="u", data=_parquet_bytes(pl.DataFrame({"a": [1]})), ext="parquet")
+    (tmp_settings.root / m.path).unlink()
+    assert store.verify_all() == [] and store.absent_locally() == 1
+    t = store.put(source="nflverse", dataset="injuries", season=2026, url="u", data=_parquet_bytes(pl.DataFrame({"a": [2]})), ext="parquet")
+    (tmp_settings.root / t.path).unlink()
+    assert any("tracked" in p for p in store.verify_all())
