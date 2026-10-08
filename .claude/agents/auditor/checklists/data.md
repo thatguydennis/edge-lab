@@ -1,6 +1,6 @@
 # Data audit checklist
 Run before any model trains on a new source or snapshot set.
-- [ ] Every snapshot named in the handoff exists, sha256 matches `.meta.json` and `data/metadata/snapshots.jsonl`
+- [ ] Every snapshot named in the handoff exists, sha256 matches `.meta.json` and `data/metadata/snapshots.<machine>.jsonl`
 - [ ] `.meta.json` has url, retrieved_at (UTC), loader_version; upstream last_modified recorded when the server sent it
 - [ ] Table schemas match `src/edgelab/db/schema.sql`; no silent column drops or type changes vs the registered dictionary
 - [ ] `edgelab quality` report: zero CRITICAL; every WARNING acknowledged in the handoff

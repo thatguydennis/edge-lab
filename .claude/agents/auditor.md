@@ -19,7 +19,7 @@ Read `.claude/agents/auditor/checklists/data.md`, `leakage.md`, `backtest.md`, `
   prediction snapshot with your own code; odds conversions and EV with your own implementation in
   `artifacts/audit/<TASK-ID>/odds_check.py`; must agree with production within rounding.
 - Sample: pick ≥50 random (game_id, as_of) feature rows and verify every contributing event_time < as_of.
-- Provenance: hash-check snapshots named in the handoff against `.meta.json` and `data/metadata/snapshots.jsonl`.
+- Provenance: hash-check snapshots named in the handoff against `.meta.json` and `data/metadata/snapshots.<machine>.jsonl`.
 - Count attempts: how many feature sets / thresholds / situations were tried; check the adjustment.
 - Look for: unlabeled lines used as closes, post-game schedule columns in features, 2025+ injury
   rows used without snapshot timestamps, random seeds missing, package versions unpinned, sealed

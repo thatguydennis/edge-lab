@@ -56,7 +56,7 @@ Updated: 2026-10-08 14:10 UTC by the Orchestrator (session 1).
 - Injury rows carry `observed_at` (our retrieval); `date_modified` only ≤2024 (TIMESTAMPTZ, UTC).
 - `nfl.games.kickoff_utc` is derived (gameday + gametime in America/New_York → UTC); `gametime` is Eastern wall-clock.
 - `market.historical_lines.line_class`: `last_pull` = completed game (≈close, book unknown); `live` = pre-kickoff observation from a tracked schedule_lines snapshot. Never `close` from nflverse.
-- Two machines, one git-tracked index: the lake is per machine and rebuildable; only injuries, schedule_lines and odds snapshots are committed.
+- Two machines: each appends to its own `data/metadata/snapshots.<machine>.jsonl`; the store reads the union. The lake is per machine and rebuildable; only injuries, schedule_lines and odds snapshots are committed. Set `EDGELAB_MACHINE` to pin a name.
 
 ## Open owner questions
 - Which sportsbooks Dennis bets at (config/books.yaml → bettable_books).

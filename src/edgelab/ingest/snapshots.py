@@ -2,7 +2,9 @@
 
 Every upstream artifact is written once, byte-for-byte, under
     data/snapshots/<source>/<dataset>/<retrieved_at>_<sha8>.<ext>
-with a sibling `.meta.json`, and indexed in `data/metadata/snapshots.jsonl` (committed to git).
+with a sibling `.meta.json`, and indexed in `data/metadata/snapshots.<machine>.jsonl` (committed to
+git). Each machine appends only to its own index file and the store reads the union of all of them,
+so two machines never produce a git conflict on the index.
 
 If the newest existing snapshot of the same (source, dataset, season) has the same sha256, no new
 file is written; an index row with `duplicate_of` is still appended so "we checked on this date" is
@@ -14,6 +16,9 @@ from __future__ import annotations
 import hashlib
 import io
 import json
+import os
+import platform
+import re
 from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
 from pathlib import Path
@@ -50,6 +55,12 @@ class SnapshotMeta:
         return json.dumps(asdict(self), sort_keys=True)
 
 
+def machine_name() -> str:
+    """Stable, filesystem-safe machine label for the per-machine index file."""
+    raw = os.environ.get("EDGELAB_MACHINE") or platform.node() or "unknown"
+    return re.sub(r"[^A-Za-z0-9_-]+", "-", raw).strip("-").lower()[:40] or "unknown"
+
+
 def utc_now_iso() -> str:
     return datetime.now(timezone.utc).replace(microsecond=0).isoformat()
 
@@ -83,7 +94,8 @@ class SnapshotStore:
         self.settings = settings or get_settings()
         self.root = self.settings.root
         self.dir = self.settings.snapshots_dir
-        self.index_path = self.settings.metadata_dir / "snapshots.jsonl"
+        self.machine = machine_name()
+        self.index_path = self.settings.metadata_dir / f"snapshots.{self.machine}.jsonl"
         self.dir.mkdir(parents=True, exist_ok=True)
         self.index_path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -95,10 +107,25 @@ class SnapshotStore:
             return str(path)
 
     # ---- index -------------------------------------------------------------------------------
+    def index_files(self) -> list[Path]:
+        return sorted(p for p in self.settings.metadata_dir.glob("snapshots*.jsonl") if p.stat().st_size > 0)
+
     def index(self) -> pl.DataFrame:
-        if not self.index_path.exists() or self.index_path.stat().st_size == 0:
+        files = self.index_files()
+        if not files:
             return pl.DataFrame()
-        return pl.read_ndjson(self.index_path)
+        frames = [pl.read_ndjson(f) for f in files]
+        cols = ["snapshot_id", "source", "dataset", "season", "url", "retrieved_at", "last_modified", "sha256",
+                "bytes", "rows", "columns", "ext", "path", "loader_version", "duplicate_of"]
+        norm = []
+        for fr in frames:
+            fr = fr.with_columns([pl.lit(None).alias(c) for c in cols if c not in fr.columns])
+            norm.append(fr.select(cols).with_columns(
+                pl.col("season").cast(pl.Int64), pl.col("rows").cast(pl.Int64), pl.col("columns").cast(pl.Int64),
+                pl.col("bytes").cast(pl.Int64),
+                *[pl.col(c).cast(pl.Utf8) for c in cols if c not in ("season", "rows", "columns", "bytes")],
+            ))
+        return pl.concat(norm).unique(subset=["snapshot_id"], keep="first").sort("retrieved_at")
 
     def latest(self, source: str, dataset: str, season: int | None = None) -> SnapshotMeta | None:
         idx = self.index()

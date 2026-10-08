@@ -83,7 +83,7 @@ CREATE TABLE IF NOT EXISTS market.line_discrepancies (
 );
 
 -- ---------------------------------------------------------------- lab (research record)
-CREATE TABLE IF NOT EXISTS lab.snapshots (            -- mirror of data/metadata/snapshots.jsonl
+CREATE TABLE IF NOT EXISTS lab.snapshots (            -- mirror of data/metadata/snapshots.<machine>.jsonl
     snapshot_id   VARCHAR PRIMARY KEY,
     source        VARCHAR, dataset VARCHAR, season INTEGER, url VARCHAR,
     retrieved_at  TIMESTAMPTZ, last_modified VARCHAR, sha256 VARCHAR, bytes BIGINT,
