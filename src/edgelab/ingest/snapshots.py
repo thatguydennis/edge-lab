@@ -114,6 +114,19 @@ class SnapshotStore:
         row = q.sort("retrieved_at").tail(1).to_dicts()[0]
         return SnapshotMeta(**{k: row.get(k) for k in SnapshotMeta.__dataclass_fields__})
 
+    def latest_local(self, source: str, dataset: str, season: int | None = None) -> SnapshotMeta | None:
+        """Newest indexed snapshot whose bytes are present on this machine (the index is shared via git,
+        the lake is per machine). Returns the primary record (never a 'checked, unchanged' one)."""
+        idx = self.index()
+        if idx.is_empty():
+            return None
+        q = idx.filter((pl.col("source") == source) & (pl.col("dataset") == dataset) & pl.col("duplicate_of").is_null())
+        q = q.filter(pl.col("season").is_null()) if season is None else q.filter(pl.col("season") == season)
+        for row in q.sort("retrieved_at", descending=True).to_dicts():
+            if (self.root / row["path"]).exists():
+                return SnapshotMeta(**{k: row.get(k) for k in SnapshotMeta.__dataclass_fields__})
+        return None
+
     def _append_index(self, meta: SnapshotMeta) -> None:
         with self.index_path.open("a", encoding="utf-8") as fh:
             fh.write(meta.to_json() + "\n")

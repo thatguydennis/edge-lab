@@ -242,10 +242,14 @@ def load_dataset(
 
     targets: list[int | None] = list(seasons) if per_season else [None]
     for season in targets:
-        meta = store.latest("nflverse", dataset, season)
+        meta = store.latest_local("nflverse", dataset, season)
         if meta is None:
-            log.warning("no snapshot for %s season=%s", dataset, season)
+            log.warning("no local snapshot for %s season=%s (run `edgelab ingest`)", dataset, season)
             continue
+        newest = store.latest("nflverse", dataset, season)
+        if newest is not None and (newest.duplicate_of or newest.snapshot_id) != meta.snapshot_id:
+            log.warning("%s season=%s: loading %s; a newer snapshot %s exists in the index but not on this machine",
+                        dataset, season, meta.snapshot_id, newest.snapshot_id)
         df = _prepare(store.read(meta), meta, dataset)
         table = _target_table(dataset, df)
         if _already_loaded(con, table, stamp_id(meta)):
